@@ -60,8 +60,10 @@ class FaissKBService(KBService):
                   score_threshold: float = SCORE_THRESHOLD,
                   embeddings: Embeddings = None,
                   ) -> List[Document]:
+        print(f"do_search,top_k:{top_k},score_threshold:{score_threshold}")
         with self.load_vector_store().acquire() as vs:
             docs = vs.similarity_search_with_score(query, k=top_k, score_threshold=score_threshold)
+        print(f"do_search,docs:{docs}")
         return docs
 
     def do_add_doc(self,

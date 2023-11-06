@@ -39,6 +39,8 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         return BaseResponse(code=404, msg=f"未找到知识库 {knowledge_base_name}")
 
     history = [History.from_data(h) for h in history]
+    #weiwei
+    print(f"server/chat/knowledge_base_chat function, history:{history}")
 
     async def knowledge_base_chat_iterator(query: str,
                                            top_k: int,
@@ -46,6 +48,9 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
                                            model_name: str = LLM_MODEL,
                                            prompt_name: str = prompt_name,
                                            ) -> AsyncIterable[str]:
+        #weiwei
+        print(f"knowledge_base_chat_iterator,query:{query},model_name:{model_name},prompt_name:{prompt_name}")
+
         callback = AsyncIteratorCallbackHandler()
         model = get_ChatOpenAI(
             model_name=model_name,
@@ -55,11 +60,20 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         )
         docs = search_docs(query, knowledge_base_name, top_k, score_threshold)
         context = "\n".join([doc.page_content for doc in docs])
+        #weiwei
+        print(f"knowledge_base_chat_iterator,search docs context:{context}")
 
         prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
         input_msg = History(role="user", content=prompt_template).to_msg_template(False)
+
+        #weiwei
+        print(f"knowledge_base_chat_iterator,input_msg:{input_msg}")
+
         chat_prompt = ChatPromptTemplate.from_messages(
             [i.to_msg_template() for i in history] + [input_msg])
+
+        #weiwei
+        print(f"knowledge_base_chat_iterator,chat_prompt:{chat_prompt}")
 
         chain = LLMChain(prompt=chat_prompt, llm=model)
 
@@ -69,6 +83,9 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
             callback.done),
         )
 
+        #weiwei
+        print(f"task call end")
+        
         source_documents = []
         for inum, doc in enumerate(docs):
             filename = os.path.split(doc.metadata["source"])[-1]

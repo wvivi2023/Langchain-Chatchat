@@ -15,6 +15,7 @@ from configs import (
 import importlib
 from text_splitter import zh_title_enhance as func_zh_title_enhance
 import langchain.document_loaders
+from langchain.document_loaders.word_document import Docx2txtLoader 
 from langchain.docstore.document import Document
 from langchain.text_splitter import TextSplitter
 from pathlib import Path
@@ -76,8 +77,9 @@ LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "RapidOCRLoader": ['.png', '.jpg', '.jpeg', '.bmp'],
                "UnstructuredFileLoader": ['.eml', '.msg', '.rst',
                                           '.rtf', '.txt', '.xml',
-                                          '.docx', '.epub', '.odt',
+                                          '.epub', '.odt',
                                           '.ppt', '.pptx', '.tsv'],
+               "Docx2txtLoader":['.docx'],
                }
 SUPPORTED_EXTS = [ext for sublist in LOADER_DICT.values() for ext in sublist]
 
@@ -281,6 +283,7 @@ class KnowledgeFile:
         self.splited_docs = None
         self.document_loader_name = get_LoaderClass(self.ext)
         self.text_splitter_name = TEXT_SPLITTER_NAME
+        print(f"KnowledgeFile: filepath:{self.filepath}")
 
     def file2docs(self, refresh: bool=False):
         if self.docs is None or refresh:
@@ -312,8 +315,13 @@ class KnowledgeFile:
                         doc.metadata["source"] = os.path.basename(self.filepath)
             else:
                 docs = text_splitter.split_documents(docs)
-
-        print(f"文档切分示例：{docs[0]}")
+                
+        #print(f"文档切分示例：{docs[0]}")
+        i = 0
+        for doc in docs:
+            print(f"**********切分段{i}：{doc}")
+            i = i+1
+           
         if zh_title_enhance:
             docs = func_zh_title_enhance(docs)
         self.splited_docs = docs

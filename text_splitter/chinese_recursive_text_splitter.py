@@ -98,7 +98,7 @@ if __name__ == "__main__":
         ]
     # text = """"""
     for inum, text in enumerate(ls):
-        print(inum)
+        print(f"**************分段：{inum}")
         chunks = text_splitter.split_text(text)
         for chunk in chunks:
-            print(chunk)
+            print(f"**************:chunk:{chunk}")

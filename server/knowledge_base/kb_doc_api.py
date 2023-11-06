@@ -29,8 +29,23 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
         return []
+   # query = "根据国网安徽信通公司安全准入实施要求，" + query
+    pre_doc = kb.search_docs(query, 1)
+    print(f"len(pre_doc):{len(pre_doc)}")
+    if len(pre_doc) > 0:
+        print(f"search_docs, len(pre_doc):{len(pre_doc)}")
+        filpath = pre_doc[0][0].metadata['source']
+        file_name = os.path.basename(filpath)
+        file_name, file_extension = os.path.splitext(file_name)
+        query = "根据" +file_name + "，"+ query
+    
+    print(f"search_docs, query:{query}")
     docs = kb.search_docs(query, top_k, score_threshold)
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
+    # i = 1
+    # for x in docs:
+    #     print(f"相似文档 {i}: {x}")
+    #     i = i+1
 
     return data
 
