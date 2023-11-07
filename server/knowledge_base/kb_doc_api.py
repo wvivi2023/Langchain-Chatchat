@@ -30,7 +30,7 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
     if kb is None:
         return []
    # query = "根据国网安徽信通公司安全准入实施要求，" + query
-    pre_doc = kb.search_docs(query, 1)
+    pre_doc = kb.search_docs(query, 1, None)
     print(f"len(pre_doc):{len(pre_doc)}")
     if len(pre_doc) > 0:
         print(f"search_docs, len(pre_doc):{len(pre_doc)}")
