@@ -41,11 +41,13 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
     
     print(f"search_docs, query:{query}")
     docs = kb.search_docs(query, top_k, score_threshold)
+    if len(pre_doc) > 0:
+        if docs is not None:
+            docs.append(pre_doc[0])
+        else:
+            docs = pre_doc[0]
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
-    # i = 1
-    # for x in docs:
-    #     print(f"相似文档 {i}: {x}")
-    #     i = i+1
+
 
     return data
 

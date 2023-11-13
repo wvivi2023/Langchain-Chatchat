@@ -68,7 +68,7 @@ def load_embeddings(model: str = EMBEDDING_MODEL, device: str = embedding_device
     from server.knowledge_base.kb_cache.base import embeddings_pool
     return embeddings_pool.load_embeddings(model=model, device=device)
 
-
+#PDFPlumberLoader
 LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "UnstructuredMarkdownLoader": ['.md'],
                "CustomJSONLoader": [".json"],
@@ -302,6 +302,8 @@ class KnowledgeFile:
         text_splitter: TextSplitter = None,
     ):
         docs = docs or self.file2docs(refresh=refresh)
+        file_name_without_extension, file_extension = os.path.splitext(self.filepath)
+        print(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
         if not docs:
             return []
         if self.ext not in [".csv"]:
@@ -314,13 +316,27 @@ class KnowledgeFile:
                     if doc.metadata:
                         doc.metadata["source"] = os.path.basename(self.filepath)
             else:
+                print(f"**********************docs2texts: text_splitter.split_documents(docs)")
+                outputfile = file_name_without_extension + "_source.txt"
+                with open(outputfile, 'w') as file:
+                    for doc in docs:
+                        file.write(doc.page_content)
                 docs = text_splitter.split_documents(docs)
                 
         #print(f"文档切分示例：{docs[0]}")
-        i = 0
-        for doc in docs:
-            print(f"**********切分段{i}：{doc}")
-            i = i+1
+        # print(f"KnowledgeFile: filepath:{self.filepath}")
+        # file_name_without_extension, file_extension = os.path.splitext(self.filepath)
+        # print("filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
+
+        i = 1
+        outputfile = file_name_without_extension + "_split.txt"
+        # 打开文件以写入模式
+        with open(outputfile, 'w') as file:
+            for doc in docs:
+                print(f"**********切分段{i}：{doc}")
+                file.write(f"分段{i}")
+                file.write(doc.page_content)
+                i = i+1
            
         if zh_title_enhance:
             docs = func_zh_title_enhance(docs)
@@ -407,7 +423,8 @@ if __name__ == "__main__":
     kb_file = KnowledgeFile(filename="test.txt", knowledge_base_name="samples")
     # kb_file.text_splitter_name = "RecursiveCharacterTextSplitter"
     docs = kb_file.file2docs()
-    pprint(docs[-1])
+    #pprint(docs[-1])
 
-    docs = kb_file.file2text()
-    pprint(docs[-1])
+    docs  = kb_file.docs2texts()
+    #docs = kb_file.file2text()
+    #pprint(docs[-1])

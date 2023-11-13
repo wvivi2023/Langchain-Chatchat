@@ -13,9 +13,9 @@ if __name__ == '__main__':
     # pprint(docs[-1])
 
     faissService = FaissKBService("test")
-    faissService.add_doc(KnowledgeFile("国网安徽信通公司安全准入实施要求_修订.docx", "test"))
+    faissService.add_doc(KnowledgeFile("电力电缆故障测寻车技术规范.docx", "test"))
     # faissService.delete_doc(KnowledgeFile("README.md", "test"))
     # faissService.do_drop_kb()
-    print(faissService.search_docs("准入手续的内容是什么？"))
+    #print(faissService.search_docs("准入手续的内容是什么？"))
 
 

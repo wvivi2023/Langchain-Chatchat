@@ -17,7 +17,7 @@ if __name__ == "__main__":
         menu_items={
             'Get Help': 'https://github.com/chatchat-space/Langchain-Chatchat',
             'Report a bug': "https://github.com/chatchat-space/Langchain-Chatchat/issues",
-            'About': f"""欢迎使用 Langchain-Chatchat WebUI {VERSION}！"""
+            'About': f"""欢迎使用 思极大模型 WebUI {VERSION}！"""
         }
     )
 
@@ -36,7 +36,8 @@ if __name__ == "__main__":
         st.image(
             os.path.join(
                 "img",
-                "logo-long-chatchat-trans-v2.png"
+                "siji.jpg"
+                #"logo-long-chatchat-trans-v2.png"
             ),
             use_column_width=True
         )
