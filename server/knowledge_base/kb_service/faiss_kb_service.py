@@ -44,6 +44,8 @@ class FaissKBService(KBService):
     def do_init(self):
         self.kb_path = self.get_kb_path()
         self.vs_path = self.get_vs_path()
+        print(f"*******self.kb_path*******:{self.kb_path}")
+        print(f"*******self.vs_path*******:{self.vs_path}")
 
     def do_create_kb(self):
         if not os.path.exists(self.vs_path):
