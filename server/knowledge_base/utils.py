@@ -334,7 +334,7 @@ class KnowledgeFile:
         with open(outputfile, 'w') as file:
             for doc in docs:
                 print(f"**********切分段{i}：{doc}")
-                file.write(f"分段{i}")
+                file.write(f"\n**********切分段{i}")
                 file.write(doc.page_content)
                 i = i+1
            

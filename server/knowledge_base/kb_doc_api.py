@@ -15,7 +15,13 @@ from server.knowledge_base.kb_service.base import KBServiceFactory
 from server.db.repository.knowledge_file_repository import get_file_detail
 from typing import List, Dict
 from langchain.docstore.document import Document
-
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from server.chat.utils import History
+from server.utils import BaseResponse, get_prompt_template
+from langchain.prompts.chat import ChatPromptTemplate
+from langchain.callbacks import AsyncIteratorCallbackHandler
 
 class DocumentWithScore(Document):
     score: float = None
@@ -25,32 +31,82 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
                 knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
                 top_k: int = Body(VECTOR_SEARCH_TOP_K, description="匹配向量数"),
                 score_threshold: float = Body(SCORE_THRESHOLD, description="知识库匹配相关度阈值，取值范围在0-1之间，SCORE越小，相关度越高，取到1相当于不筛选，建议设置在0.5左右", ge=0, le=1),
+                model:ChatOpenAI = Body(...,description="大语言模型"),
                 ) -> List[DocumentWithScore]:
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
         return []
-   # query = "根据国网安徽信通公司安全准入实施要求，" + query
+    
+    #history =  {}
+    #augment_prompt_template = get_prompt_template("data_augment", "default")
+    #input_msg1 = History(role="user", content=augment_prompt_template).to_msg_template(False)
+    #chat_prompt1 = ChatPromptTemplate.from_messages(
+    #         [i.to_msg_template() for i in history] + [input_msg1])
+    #chain1 = LLMChain(prompt=chat_prompt1, llm=model)
+    #print(f"knowledge_base_chat_iterator,prompt_template:{chat_prompt1}")
+    #result = chain1._call({ "question": query})
+    #query1 = result["text"]
+    #
+    #print(f"相似的问法:{query1}")
+    #docs = kb.search_docs(query, top_k, score_threshold)
+    #print(f"{query}的相似文档块有{docs}")
+    #data = []
+    #if query1 != query:
+    #    docs1 = kb.search_docs(query1, top_k, score_threshold)
+    #    print(f"{query1}的相似文档块有{docs1}")
+    #    rerank_docs = rerank(docs1,docs,top_k)
+    #    print(f"精排后的相似文档块有{rerank_docs}")
+    #    data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in rerank_docs]
+    #else:
+    #    data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
+    
+    #print(f"chain1._call, result:{result},similiarit text:{query1}")
+    
+   
     pre_doc = kb.search_docs(query, 1, None)
     print(f"len(pre_doc):{len(pre_doc)}")
     if len(pre_doc) > 0:
-        print(f"search_docs, len(pre_doc):{len(pre_doc)}")
+        print(f"search_docs, pre_doc:{pre_doc}")
         filpath = pre_doc[0][0].metadata['source']
         file_name = os.path.basename(filpath)
         file_name, file_extension = os.path.splitext(file_name)
         query = "根据" +file_name + "，"+ query
     
-    print(f"search_docs, query:{query}")
+    print(f"search_docs, query:{query}")  
     docs = kb.search_docs(query, top_k, score_threshold)
+    print(f"search_docs, docs:{docs}")
     if len(pre_doc) > 0:
         if docs is not None:
             docs.append(pre_doc[0])
         else:
             docs = pre_doc[0]
+    
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
-
 
     return data
 
+def rerank(query_docs:List[Document] = Body(...,description="源query查询相似文档", examples=[]),
+           augment_docs:List[Document] = Body(...,description="增强query查询相似文档", examples=[]),
+           top_k: int = Body(VECTOR_SEARCH_TOP_K, description="匹配向量数"),
+           )-> List[Document]:
+    all_documents = query_docs + augment_docs
+   # unique_documents_dict = {doc[0].page_content: doc for doc in all_documents}
+    
+    unique_documents_dict = {}
+    for doc in all_documents:
+        if doc[0].page_content not in unique_documents_dict or doc[1] < unique_documents_dict[doc[0].page_content][1]:
+            unique_documents_dict[doc[0].page_content] = doc
+
+# 得到去重后的文档列表
+    unique_documents = list(unique_documents_dict.values())
+
+    sorted_documents = sorted(unique_documents_dict.values(),key=lambda doc: doc[1],reverse=False)
+    min_documents = sorted_documents[:top_k]
+# 打印结果
+    for doc in min_documents:
+        print(f"{doc[0].page_content},doc[1]")
+
+    return min_documents
 
 def list_files(
     knowledge_base_name: str
@@ -158,6 +214,8 @@ def upload_docs(files: List[UploadFile] = File(..., description="上传文件，
     failed_files = {}
     file_names = list(docs.keys())
 
+    print(f"upload_docs, file_names:{file_names}")
+
     # 先将上传的文件保存到磁盘
     for result in _save_files_in_thread(files, knowledge_base_name=knowledge_base_name, override=override):
         filename = result["data"]["file_name"]
@@ -167,7 +225,9 @@ def upload_docs(files: List[UploadFile] = File(..., description="上传文件，
         if filename not in file_names:
             file_names.append(filename)
 
+   
     # 对保存的文件进行向量化
+    print(f"upload_docs, to_vector_store:{to_vector_store}")
     if to_vector_store:
         result = update_docs(
             knowledge_base_name=knowledge_base_name,
