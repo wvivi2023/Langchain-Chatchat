@@ -38,6 +38,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         super().__init__(keep_separator=keep_separator, **kwargs)
         self._separators = separators or [
             SPLIT_SEPARATOE,
+            SPLIT_SEPARATOE,
             #"\n\n",
             #"\n",
             # "。|！|？",
@@ -54,7 +55,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         # Get appropriate separator to use
         separator = separators[-1]
         new_separators = [SPLIT_SEPARATOE]
-        text = re.sub(r'(\n+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s*(?!\.|[a-zA-Z1-9]))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过1.2这样的章和节来分块
+        text = re.sub(r'(\n+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s+(?!\.|[a-zA-Z1-9]))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过1.2 这样的章和节来分块
         text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\.[A-Za-z0-9]+)+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过表  A.4.a 
         text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
         text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
@@ -88,7 +89,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
                 if not new_separators:
                     final_chunks.append(s)
                 else:
-                    text = re.sub(r'(\s+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 来分块
+                    s = re.sub(r'(\s+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 来分块
                     other_info = self._split_text(s, new_separators)
                     final_chunks.extend(other_info)
         if _good_splits:
