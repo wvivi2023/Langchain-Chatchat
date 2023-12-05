@@ -75,12 +75,20 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
     print(f"search_docs, query:{query}")  
     docs = kb.search_docs(query, top_k, score_threshold)
     print(f"search_docs, docs:{docs}")
+
+    bFind = False
     if len(pre_doc) > 0:
         if docs is not None:
-            docs.append(pre_doc[0])
+            for tempDoc in docs:
+                if tempDoc[0].page_content == pre_doc[0][0].page_content:
+                    bFind = True
+                    break
         else:
-            docs = pre_doc[0]
-    
+             docs = pre_doc[0]     
+
+        if not bFind:
+            docs.append(pre_doc[0])
+
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
 
     return data
