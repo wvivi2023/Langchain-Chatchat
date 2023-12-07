@@ -40,7 +40,8 @@ if __name__ == "__main__":
         st.image(
             os.path.join(
                 "img",
-                "logo-long-chatchat-trans-v2.png"
+                #"logo-long-chatchat-trans-v2.png"
+                "siji.jpg"
             ),
             use_column_width=True
         )

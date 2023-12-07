@@ -34,7 +34,33 @@ def search_docs(
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
         return []
+    pre_doc = kb.search_docs(query, 1, None)
+    print(f"len(pre_doc):{len(pre_doc)}")
+    if len(pre_doc) > 0:
+        print(f"search_docs, pre_doc:{pre_doc}")
+        filpath = pre_doc[0][0].metadata['source']
+        file_name = os.path.basename(filpath)
+        file_name, file_extension = os.path.splitext(file_name)
+        query = "根据" +file_name + "，"+ query
+
+    print(f"search_docs, query:{query}")  
+
     docs = kb.search_docs(query, top_k, score_threshold)
+
+    print(f"search_docs, docs:{docs}")
+    bFind = False
+    if len(pre_doc) > 0:
+        if docs is not None:
+            for tempDoc in docs:
+                if tempDoc[0].page_content == pre_doc[0][0].page_content:
+                    bFind = True
+                    break
+        else:
+             docs = pre_doc[0]     
+
+        if not bFind:
+            docs.append(pre_doc[0])
+            
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
     return data
 

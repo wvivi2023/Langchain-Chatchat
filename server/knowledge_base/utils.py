@@ -20,7 +20,7 @@ from server.utils import run_in_thread_pool, get_model_worker_config
 import json
 from typing import List, Union,Dict, Tuple, Generator
 import chardet
-
+from langchain.document_loaders.word_document import Docx2txtLoader 
 
 def validate_kb_name(knowledge_base_id: str) -> bool:
     # 检查是否包含预期外的字符或路径攻击关键字
@@ -103,10 +103,11 @@ LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "SRTLoader": ['.srt'],
                "TomlLoader": ['.toml'],
                "UnstructuredTSVLoader": ['.tsv'],
-               "UnstructuredWordDocumentLoader": ['.docx', 'doc'],
+               #"UnstructuredWordDocumentLoader": ['.docx', 'doc'],
                "UnstructuredXMLLoader": ['.xml'],
                "UnstructuredPowerPointLoader": ['.ppt', '.pptx'],
                "UnstructuredFileLoader": ['.txt'],
+               "Docx2txtLoader":['.docx', 'doc'],
                }
 SUPPORTED_EXTS = [ext for sublist in LOADER_DICT.values() for ext in sublist]
 
@@ -280,6 +281,7 @@ class KnowledgeFile:
         self.splited_docs = None
         self.document_loader_name = get_LoaderClass(self.ext)
         self.text_splitter_name = TEXT_SPLITTER_NAME
+        print(f"KnowledgeFile: filepath:{self.filepath}")
 
     def file2docs(self, refresh: bool = False):
         if self.docs is None or refresh:
@@ -300,6 +302,8 @@ class KnowledgeFile:
             text_splitter: TextSplitter = None,
     ):
         docs = docs or self.file2docs(refresh=refresh)
+        file_name_without_extension, file_extension = os.path.splitext(self.filepath)
+        print(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
         if not docs:
             return []
         if self.ext not in [".csv"]:
@@ -309,12 +313,28 @@ class KnowledgeFile:
             if self.text_splitter_name == "MarkdownHeaderTextSplitter":
                 docs = text_splitter.split_text(docs[0].page_content)
             else:
+                print(f"**********************docs2texts: text_splitter.split_documents(docs)")
+                outputfile = file_name_without_extension + "_source.txt"
+                with open(outputfile, 'w') as file:
+                    for doc in docs:
+                        file.write(doc.page_content)
+
                 docs = text_splitter.split_documents(docs)
 
         if not docs:
             return []
 
-        print(f"文档切分示例：{docs[0]}")
+        #print(f"文档切分示例：{docs[0]}")
+        i = 1
+        outputfile = file_name_without_extension + "_split.txt"
+        # 打开文件以写入模式
+        with open(outputfile, 'w') as file:
+            for doc in docs:
+                print(f"**********切分段{i}：{doc}")
+                file.write(f"\n**********切分段{i}")
+                file.write(doc.page_content)
+                i = i+1
+
         if zh_title_enhance:
             docs = func_zh_title_enhance(docs)
         self.splited_docs = docs
