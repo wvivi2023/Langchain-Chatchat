@@ -36,7 +36,7 @@ class ESKBService(KBService):
             else:
                 logger.warning("ES未配置用户名和密码")
                 self.es_client_python = Elasticsearch(f"http://{self.IP}:{self.PORT}")
-            self.es_client_python.indices.create(index=self.index_name)
+            #self.es_client_python.indices.create(index=self.index_name, ignore=400)
         except ConnectionError:
             logger.error("连接到 Elasticsearch 失败！")
         except Exception as e:
@@ -63,6 +63,7 @@ class ESKBService(KBService):
                     vector_query_field="dense_vector",
                     embedding=self.embeddings_model,
                 )
+            self.db_init._create_index_if_not_exists(index_name=self.index_name,dims_length=8192)
         except ConnectionError:
             print("### 连接到 Elasticsearch 失败！")
             logger.error("### 连接到 Elasticsearch 失败！")
