@@ -97,7 +97,26 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         if _good_splits:
             merged_text = self._merge_splits(_good_splits, _separator)
             final_chunks.extend(merged_text)
-        return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
+        
+        final_chunks = [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
+        #将单行和两行的和下面的分块合并
+        return_chunks = []
+        temp_sencond = ""
+        for chunk in final_chunks:
+            if temp_sencond =="":
+                if len(chunk.splitlines()) <= 1:
+                    temp_sencond = chunk
+                else:
+                    return_chunks.append(chunk)
+            else:
+                return_chunks.append(temp_sencond + chunk)
+                temp_sencond = "" 
+
+        if temp_sencond !="":
+            return_chunks.append(temp_sencond)
+
+        return return_chunks
+        #return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
 
 
 if __name__ == "__main__":

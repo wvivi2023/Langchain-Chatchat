@@ -25,7 +25,7 @@ from server.utils import run_in_thread_pool, embedding_device, get_model_worker_
 import io
 from typing import List, Union, Callable, Dict, Optional, Tuple, Generator
 import chardet
-
+import re
 
 def validate_kb_name(knowledge_base_id: str) -> bool:
     # 检查是否包含预期外的字符或路径攻击关键字
@@ -314,6 +314,10 @@ class KnowledgeFile:
                 print("文件不存在")
 
         docs = docs or self.file2docs(refresh=refresh)
+        #after loading, remove the redundant line break
+        for doc in docs:
+            if doc.page_content.strip()!="":
+                doc.page_content = re.sub(r"\n{2,}", "\n", doc.page_content.strip()) 
         file_name_without_extension, file_extension = os.path.splitext(self.filepath)
         print(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
         if not docs:
