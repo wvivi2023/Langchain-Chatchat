@@ -293,6 +293,8 @@ class KnowledgeFile:
             loader = get_loader(self.document_loader_name, self.filepath)
             self.docs = loader.load()
         return self.docs
+        
+        print(f"KnowledgeFile: filepath:{self.filepath}, doc_title_name:{self.doc_title_name}, ext:{self.ext}")
 
     def docs2texts(
         self,
