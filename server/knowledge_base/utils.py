@@ -275,7 +275,9 @@ class KnowledgeFile:
         '''
         self.kb_name = knowledge_base_name
         self.filename = filename
-        self.ext = os.path.splitext(filename)[-1].lower()
+        #self.ext = os.path.splitext(filename)[-1].lower()
+        self.doc_title_name, file_extension = os.path.splitext(filename)
+        self.ext = file_extension.lower()
         if self.ext not in SUPPORTED_EXTS:
             raise ValueError(f"暂未支持的文件格式 {self.ext}")
         self.filepath = get_file_path(knowledge_base_name, filename)
@@ -301,6 +303,14 @@ class KnowledgeFile:
         chunk_overlap: int = OVERLAP_SIZE,
         text_splitter: TextSplitter = None,
     ):
+        def customize_zh_title_enhance(docs: Document) -> Document:
+            if len(docs) > 0:
+                for doc in docs:
+                    doc.page_content = f"下文与({self.doc_title_name})有关。{doc.page_content}"
+                return docs
+            else:
+                print("文件不存在")
+
         docs = docs or self.file2docs(refresh=refresh)
         file_name_without_extension, file_extension = os.path.splitext(self.filepath)
         print(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
@@ -337,11 +347,23 @@ class KnowledgeFile:
                 file.write(f"\n**********切分段{i}")
                 file.write(doc.page_content)
                 i = i+1
-           
+
         if zh_title_enhance:
-            docs = func_zh_title_enhance(docs)
+            docs = customize_zh_title_enhance(docs)
+            i = 1
+            outputfile = file_name_without_extension + "_split.txt"
+            # 打开文件以写入模式
+            with open(outputfile, 'w') as file:
+                for doc in docs:
+                    print(f"**********切分段{i}：{doc}")
+                    file.write(f"\n**********切分段{i}")
+                    file.write(doc.page_content)
+                    i = i+1
+
         self.splited_docs = docs
         return self.splited_docs
+    
+
 
     def file2text(
         self,

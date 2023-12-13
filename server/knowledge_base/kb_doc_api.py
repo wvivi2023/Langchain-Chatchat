@@ -63,15 +63,16 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
     #print(f"chain1._call, result:{result},similiarit text:{query1}")
     
    
-    pre_doc = kb.search_docs(query, 1, None)
-    print(f"len(pre_doc):{len(pre_doc)}")
-    if len(pre_doc) > 0:
-        print(f"search_docs, pre_doc:{pre_doc}")
-        filpath = pre_doc[0][0].metadata['source']
-        file_name = os.path.basename(filpath)
-        file_name, file_extension = os.path.splitext(file_name)
-        query = "根据" +file_name + "，"+ query
+    # pre_doc = kb.search_docs(query, 1, None)
+    # print(f"len(pre_doc):{len(pre_doc)}")
+    # if len(pre_doc) > 0:
+    #     print(f"search_docs, pre_doc:{pre_doc}")
+    #     filpath = pre_doc[0][0].metadata['source']
+    #     file_name = os.path.basename(filpath)
+    #     file_name, file_extension = os.path.splitext(file_name)
+    #     query = "根据" +file_name + "，"+ query
     
+    pre_doc = []
     print(f"search_docs, query:{query}")  
     docs = kb.search_docs(query, top_k, score_threshold)
     print(f"search_docs, docs:{docs}")
