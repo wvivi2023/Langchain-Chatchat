@@ -39,7 +39,7 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         return BaseResponse(code=404, msg=f"未找到知识库 {knowledge_base_name}")
 
     history = [History.from_data(h) for h in history]
-    print(f"server/chat/knowledge_base_chat function, history:{history}")
+    print(f"******server/chat/knowledge_base_chat function, history:{history}")
     async def knowledge_base_chat_iterator(query: str,
                                            top_k: int,
                                            history: Optional[List[History]],
