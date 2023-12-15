@@ -62,7 +62,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
         text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
         text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(手工分段\*\*\s+)', r"\n\n\n\n\n\n\n\n\n\n", text)  # 通过“手工分段**”
+        text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n", text)  # 通过“手工分段**”
         #text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 再通过 1.2 来分块
         text = text.rstrip()  # 段尾如果有多余的\n就去掉它
         for i, _s in enumerate(separators):
@@ -100,12 +100,12 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             final_chunks.extend(merged_text)
         
         final_chunks = [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
-        #将单行并且字数小于25，和下面的分块合并
+        #将两行以内并且字数小于25，和下面的分块合并
         return_chunks = []
         temp_sencond = ""
         for chunk in final_chunks:
             if temp_sencond =="":
-                if len(chunk.splitlines()) <= 1 and len(chunk) <= 25:
+                if len(chunk.splitlines()) <= 2 and len(chunk) <= 25:
                     temp_sencond = chunk
                 else:
                     return_chunks.append(chunk)
