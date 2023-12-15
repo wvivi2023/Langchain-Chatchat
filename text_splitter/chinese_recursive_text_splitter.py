@@ -100,7 +100,6 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             final_chunks.extend(merged_text)
         
         final_chunks = [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
-        #将单行和两行的和下面的分块合并
         #将单行并且字数小于25，和下面的分块合并
         return_chunks = []
         temp_sencond = ""
