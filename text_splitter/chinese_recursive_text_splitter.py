@@ -55,12 +55,12 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         new_separators = []
         text = re.sub(r'(\n+前\s+言\n+)',  r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过前言分块
         text = re.sub(r'(\n+\d+[^\S\n]+[^\s\.]+)', r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过1 这样的
-        text = re.sub(r'(\n+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s+(?!\.|[a-zA-Z1-9]))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过1.2 这样的章和节来分块
+        text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
         text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\.[A-Za-z0-9]+)+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过表  A.4.a 
         text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
         text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
         text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(\n+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 再通过 1.2 来分块
+        text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n", text)  # 通过“手工分段**”
         text = text.rstrip()  # 段尾如果有多余的\n就去掉它
         for i, _s in enumerate(separators):
             _separator = _s if self._is_separator_regex else re.escape(_s)
@@ -89,13 +89,32 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
                 if not new_separators:
                     final_chunks.append(s)
                 else:
-                    s = re.sub(r'(\n+[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s*\.\s*[a-zA-Z1-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 
+                    s = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 
                     other_info = self._split_text(s, new_separators)
                     final_chunks.extend(other_info)
         if _good_splits:
             merged_text = self._merge_splits(_good_splits, _separator)
             final_chunks.extend(merged_text)
-        return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
+
+        final_chunks = [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
+        #将两行并且字数小于25，和下面的分块合并
+        return_chunks = []
+        temp_sencond = ""
+        for chunk in final_chunks:
+            if temp_sencond =="":
+                if len(chunk.splitlines()) <= 2 and len(chunk) <= 25:
+                    temp_sencond = chunk
+                else:
+                    return_chunks.append(chunk)
+            else:
+                return_chunks.append(temp_sencond + chunk)
+                temp_sencond = "" 
+
+        if temp_sencond !="":
+            return_chunks.append(temp_sencond)
+
+        return return_chunks
+        #return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]
 
 
 if __name__ == "__main__":

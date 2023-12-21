@@ -63,7 +63,7 @@ class ESKBService(KBService):
                     vector_query_field="dense_vector",
                     embedding=self.embeddings_model,
                 )
-            self.db_init._create_index_if_not_exists(index_name=self.index_name,dims_length=8192)
+            self.db_init._create_index_if_not_exists(index_name=self.index_name,dims_length=1024)
         except ConnectionError:
             print("### 连接到 Elasticsearch 失败！")
             logger.error("### 连接到 Elasticsearch 失败！")
@@ -127,6 +127,25 @@ class ESKBService(KBService):
 
     def do_search(self, query:str, top_k: int, score_threshold: float):
         # 文本相似性检索
+        # Example of a custom query thats just doing a BM25 search on the text field.
+        def custom_query(query_body: dict, query: str):
+            """Custom query to be used in Elasticsearch.
+            Args:
+                query_body (dict): Elasticsearch query body.
+                query (str): Query string.
+            Returns:
+                dict: Elasticsearch query body.
+            """
+            print(f"Query Retriever created by the retrieval strategy:{query_body}")
+            print()
+
+            new_query_body = {"query": {"match": {"text": query}}}
+
+            print(f"Query thats actually used in Elasticsearch:{new_query_body}")
+            print()
+
+            return new_query_body
+
         docs = self.db_init.similarity_search_with_score(query=query,
                                          k=top_k)
         return docs

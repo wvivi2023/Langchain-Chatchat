@@ -21,6 +21,7 @@ import json
 from typing import List, Union,Dict, Tuple, Generator
 import chardet
 from langchain.document_loaders.word_document import Docx2txtLoader 
+import re
 
 def validate_kb_name(knowledge_base_id: str) -> bool:
     # 检查是否包含预期外的字符或路径攻击关键字
@@ -71,7 +72,7 @@ def list_files_from_folder(kb_name: str):
                 for target_entry in target_it:
                     process_entry(target_entry)
         elif entry.is_file():
-            result.append(entry.path)
+            result.append(os.path.relpath(entry.path, doc_path))
         elif entry.is_dir():
             with os.scandir(entry.path) as it:
                 for sub_entry in it:
@@ -272,7 +273,9 @@ class KnowledgeFile:
         '''
         self.kb_name = knowledge_base_name
         self.filename = filename
-        self.ext = os.path.splitext(filename)[-1].lower()
+        #self.ext = os.path.splitext(filename)[-1].lower()
+        self.doc_title_name, file_extension = os.path.splitext(filename)
+        self.ext = file_extension.lower()
         if self.ext not in SUPPORTED_EXTS:
             raise ValueError(f"暂未支持的文件格式 {self.filename}")
         self.loader_kwargs = loader_kwargs
@@ -301,7 +304,20 @@ class KnowledgeFile:
             chunk_overlap: int = OVERLAP_SIZE,
             text_splitter: TextSplitter = None,
     ):
+        def customize_zh_title_enhance(docs: Document) -> Document:
+            if len(docs) > 0:
+                for doc in docs:
+                    doc.page_content = f"下文与({self.doc_title_name})有关。{doc.page_content}"
+                return docs
+            else:
+                print("文件不存在")
+
         docs = docs or self.file2docs(refresh=refresh)
+        #after loading, remove the redundant line break
+        for doc in docs:
+            if doc.page_content.strip()!="":
+                doc.page_content = re.sub(r"\n{2,}", "\n", doc.page_content.strip()) 
+
         file_name_without_extension, file_extension = os.path.splitext(self.filepath)
         print(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
         if not docs:
@@ -320,23 +336,24 @@ class KnowledgeFile:
                         file.write(doc.page_content)
 
                 docs = text_splitter.split_documents(docs)
+                print(f"after text_splitter.split_documents,{docs}")
 
         if not docs:
             return []
-
-        #print(f"文档切分示例：{docs[0]}")
-        i = 1
-        outputfile = file_name_without_extension + "_split.txt"
-        # 打开文件以写入模式
-        with open(outputfile, 'w') as file:
-            for doc in docs:
-                print(f"**********切分段{i}：{doc}")
-                file.write(f"\n**********切分段{i}")
-                file.write(doc.page_content)
-                i = i+1
-
+        
         if zh_title_enhance:
-            docs = func_zh_title_enhance(docs)
+            #docs = func_zh_title_enhance(docs)
+            docs = customize_zh_title_enhance(docs)
+            i = 1
+            outputfile = file_name_without_extension + "_split.txt"
+            # 打开文件以写入模式
+            with open(outputfile, 'w') as file:
+                for doc in docs:
+                    print(f"**********切分段{i}：{doc}")
+                    file.write(f"\n**********切分段{i}")
+                    file.write(doc.page_content)
+                    i = i+1
+        
         self.splited_docs = docs
         return self.splited_docs
 
