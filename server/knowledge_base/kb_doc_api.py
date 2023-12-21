@@ -15,7 +15,7 @@ from server.knowledge_base.kb_service.base import KBServiceFactory
 from server.db.repository.knowledge_file_repository import get_file_detail
 from langchain.docstore.document import Document
 from typing import List
-
+from langchain.retrievers import BM25Retriever
 
 class DocumentWithScore(Document):
     score: float = None
@@ -48,7 +48,7 @@ def search_docs(
     pre_doc = []
     docs = kb.search_docs(query, top_k, score_threshold)
 
-    print(f"search_docs, docs:{docs}")
+    print(f"*****COSINE similarity search_docs, docs:{docs}")
     bFind = False
     if len(pre_doc) > 0:
         if docs is not None:
@@ -61,7 +61,11 @@ def search_docs(
 
         if not bFind:
             docs.append(pre_doc[0])
-            
+    
+    retriever = BM25Retriever.from_documents(docs)
+    result = retriever.get_relevant_documents(query)
+    print(f"****** BM25 similarity get_relevant_documents:{result}")
+
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
     return data
 

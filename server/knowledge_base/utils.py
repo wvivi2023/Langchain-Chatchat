@@ -336,7 +336,7 @@ class KnowledgeFile:
                         file.write(doc.page_content)
 
                 docs = text_splitter.split_documents(docs)
-                print(f"after text_splitter.split_documents,{docs}")
+                #print(f"after text_splitter.split_documents,{docs}")
 
         if not docs:
             return []
