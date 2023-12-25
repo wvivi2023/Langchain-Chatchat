@@ -124,6 +124,16 @@ class ESKBService(KBService):
             print(e)
 
 
+    # def do_search_keyword(self, query:str, top_k: int):
+    #     temp_query = {
+    #             "query": {
+    #                 "match": {
+    #                     "context.keyword": query
+    #                 }
+    #             }
+    #         }
+    #     search_results = self.es_client_python.search(body=query, size=top_k)
+        
 
     def do_search(self, query:str, top_k: int, score_threshold: float):
         # 文本相似性检索
@@ -145,6 +155,28 @@ class ESKBService(KBService):
             print()
 
             return new_query_body
+        
+        # temp_query = {
+        #         "query": {
+        #             "match": {
+        #                 "context": query
+        #             }
+        #         }
+        #     }
+        # search_results = self.es_client_python.search(body=temp_query, size=top_k)
+        # hits = [hit for hit in search_results["hits"]["hits"]]
+        # docs_and_scores = [
+        #     (
+        #         Document(
+        #             page_content=hit["_source"]["context"],
+        #             metadata=hit["_source"]["metadata"],
+        #         ),
+        #         hit["_score"],
+        #     )
+        #     for hit in hits
+        # ]
+
+        # print(f"***********************do_searc_keyword, result:{docs_and_scores}")
 
         docs = self.db_init.similarity_search_with_score(query=query,
                                          k=top_k)
@@ -152,17 +184,20 @@ class ESKBService(KBService):
 
 
     def do_delete_doc(self, kb_file, **kwargs):
+        base_file_name = os.path.basename(kb_file.filepath)
         if self.es_client_python.indices.exists(index=self.index_name):
             # 从向量数据库中删除索引(文档名称是Keyword)
             query = {
                 "query": {
                     "term": {
-                        "metadata.source.keyword": kb_file.filepath
+                        "metadata.source.keyword": base_file_name
                     }
                 }
             }
+            print(f"***do_delete_doc: kb_file.filepath:{kb_file.filepath}, base_file_name:{base_file_name}")
             # 注意设置size，默认返回10个。
             search_results = self.es_client_python.search(body=query, size=50)
+            #print(f"delete search_result:{search_results}")
             delete_list = [hit["_id"] for hit in search_results['hits']['hits']]
             if len(delete_list) == 0:
                 return None
