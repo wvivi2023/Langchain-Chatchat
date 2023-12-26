@@ -6,7 +6,9 @@ import PyPDF2
 
 logger = logging.getLogger(__name__)
 
-SPLIT_SEPARATOE = "\n\n\n\n\n\n\n\n\n\n"
+First_SEPARATOE = "\n\n\n\n\n\n\n\n\n\n"
+Second_SEPARATOE = "\n\n\n\n\n\n\n\n"
+Third_SEPARATOE = "\n\n\n\n\n\n"
 def _split_text_with_regex_from_end(
         text: str, separator: str, keep_separator: bool
 ) -> List[str]:
@@ -37,8 +39,9 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         """Create a new TextSplitter."""
         super().__init__(keep_separator=keep_separator, **kwargs)
         self._separators = separators or [
-            SPLIT_SEPARATOE,
-            SPLIT_SEPARATOE,
+            First_SEPARATOE,
+            Second_SEPARATOE,
+            Third_SEPARATOE
             #"\n\n",
             #"\n",
             # "。|！|？",
@@ -47,6 +50,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             # "，|,\s"
         ]
         self._is_separator_regex = is_separator_regex
+        self.is_recursive = False
 
     def _split_text(self, text: str, separators: List[str]) -> List[str]:
         """Split incoming text and return chunks."""
@@ -55,16 +59,20 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         # Get appropriate separator to use
         separator = separators[-1]
         new_separators = []
-        text = re.sub(r'(\n+前\s+言\n+)',  r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过前言分块
-        text = re.sub(r'(\n+\d+[^\S\n]+[^\s\.]+)', r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过1 这样的
-        text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
-        text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\.[A-Za-z0-9]+)+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过表  A.4.a 
-        text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n", text)  # 通过“手工分段**”
-        #text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 再通过 1.2 来分块
-        text = text.rstrip()  # 段尾如果有多余的\n就去掉它
+        if self.is_recursive == False:
+            text = re.sub(r'(\n+前\s+言\n+)',  r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过前言分块
+            text = re.sub(r'(\n+\d+[^\S\n]+[^\s\.]+)', r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过1 这样的
+            text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过“手工分段**”
+            text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 章
+
+            text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
+            text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\.[A-Za-z0-9]+)+\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过表  A.4.a 
+            text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
+            text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
+            
+            text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\1", text)  # 再通过 1.2.3 
+            text = text.rstrip()  # 段尾如果有多余的\n就去掉它
+            self.is_recursive = True
         for i, _s in enumerate(separators):
             _separator = _s if self._is_separator_regex else re.escape(_s)
             if _s == "":
@@ -92,7 +100,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
                 if not new_separators:
                     final_chunks.append(s)
                 else:
-                    s = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 来分块
+                    #s = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 来分块
                     other_info = self._split_text(s, new_separators)
                     final_chunks.extend(other_info)
         if _good_splits:
