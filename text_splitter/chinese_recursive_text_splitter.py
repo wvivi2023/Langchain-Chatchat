@@ -5,7 +5,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-SPLIT_SEPARATOE = "\n\n\n\n\n\n\n\n\n\n"
+First_SEPARATOE = "\n\n\n\n\n\n\n\n\n\n"
+Second_SEPARATOE = "\n\n\n\n\n\n\n\n"
+Third_SEPARATOE = "\n\n\n\n\n\n"
 def _split_text_with_regex_from_end(
         text: str, separator: str, keep_separator: bool
 ) -> List[str]:
@@ -36,8 +38,9 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         """Create a new TextSplitter."""
         super().__init__(keep_separator=keep_separator, **kwargs)
         self._separators = separators or [
-            SPLIT_SEPARATOE,
-            SPLIT_SEPARATOE,
+            First_SEPARATOE,
+            Second_SEPARATOE,
+            Third_SEPARATOE
             # "\n\n",
             # "\n",
             # "。|！|？",
@@ -46,6 +49,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             # "，|,\s"
         ]
         self._is_separator_regex = is_separator_regex
+        self.is_recursive = False
 
     def _split_text(self, text: str, separators: List[str]) -> List[str]:
         """Split incoming text and return chunks."""
@@ -53,15 +57,21 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         # Get appropriate separator to use
         separator = separators[-1]
         new_separators = []
-        text = re.sub(r'(\n+前\s+言\n+)',  r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过前言分块
-        text = re.sub(r'(\n+\d+[^\S\n]+[^\s\.]+)', r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过1 这样的
-        text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
-        text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\.[A-Za-z0-9]+)+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过表  A.4.a 
-        text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
-        text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n", text)  # 通过“手工分段**”
-        text = text.rstrip()  # 段尾如果有多余的\n就去掉它
+        if self.is_recursive == False:
+            text = re.sub(r'(\n+前\s+言\n+)',  r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过前言分块
+            text = re.sub(r'(\n+\d+[^\S\n]+[^\s\.]+)', r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过1 这样的
+            text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过“手工分段**”
+            text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 章
+
+            text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
+            text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\.[A-Za-z0-9]+)+\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过表  A.4.a 
+            text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
+            text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
+            
+            text = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\1", text)  # 再通过 1.2.3 
+            text = text.rstrip()  # 段尾如果有多余的\n就去掉它
+            self.is_recursive = True
+
         for i, _s in enumerate(separators):
             _separator = _s if self._is_separator_regex else re.escape(_s)
             if _s == "":
@@ -79,17 +89,21 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         _good_splits = []
         _separator = "" if self._keep_separator else separator
         for s in splits:
+            #print(f"***s:{s},len:{self._length_function(s)}")
             if self._length_function(s) < self._chunk_size:
                 _good_splits.append(s)
             else:
                 if _good_splits:
+                    #print(f"***_merge_splits(s)")
                     merged_text = self._merge_splits(_good_splits, _separator)
                     final_chunks.extend(merged_text)
                     _good_splits = []
                 if not new_separators:
                     final_chunks.append(s)
+                    #print(f"***final_chunks.append(s)")
                 else:
-                    s = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 
+                    #s = re.sub(r'(\n+[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", s)  # 再通过 1.2.3 
+                    #print(f"***下一级_split_text(s)")
                     other_info = self._split_text(s, new_separators)
                     final_chunks.extend(other_info)
         if _good_splits:
@@ -121,15 +135,30 @@ if __name__ == "__main__":
     text_splitter = ChineseRecursiveTextSplitter(
         keep_separator=True,
         is_separator_regex=True,
-        chunk_size=50,
-        chunk_overlap=0
+        chunk_size=300,
+        chunk_overlap=30
     )
     ls = [
-        """中国对外贸易形势报告（75页）。前 10 个月，一般贸易进出口 19.5 万亿元，增长 25.1%， 比整体进出口增速高出 2.9 个百分点，占进出口总额的 61.7%，较去年同期提升 1.6 个百分点。其中，一般贸易出口 10.6 万亿元，增长 25.3%，占出口总额的 60.9%，提升 1.5 个百分点；进口8.9万亿元，增长24.9%，占进口总额的62.7%， 提升 1.8 个百分点。加工贸易进出口 6.8 万亿元，增长 11.8%， 占进出口总额的 21.5%，减少 2.0 个百分点。其中，出口增 长 10.4%，占出口总额的 24.3%，减少 2.6 个百分点；进口增 长 14.2%，占进口总额的 18.0%，减少 1.2 个百分点。此外， 以保税物流方式进出口 3.96 万亿元，增长 27.9%。其中，出 口 1.47 万亿元，增长 38.9%；进口 2.49 万亿元，增长 22.2%。前三季度，中国服务贸易继续保持快速增长态势。服务 进出口总额 37834.3 亿元，增长 11.6%；其中服务出口 17820.9 亿元，增长 27.3%；进口 20013.4 亿元，增长 0.5%，进口增 速实现了疫情以来的首次转正。服务出口增幅大于进口 26.8 个百分点，带动服务贸易逆差下降 62.9%至 2192.5 亿元。服 务贸易结构持续优化，知识密集型服务进出口 16917.7 亿元， 增长 13.3%，占服务进出口总额的比重达到 44.7%，提升 0.7 个百分点。 二、中国对外贸易发展环境分析和展望 全球疫情起伏反复，经济复苏分化加剧，大宗商品价格 上涨、能源紧缺、运力紧张及发达经济体政策调整外溢等风 险交织叠加。同时也要看到，我国经济长期向好的趋势没有 改变，外贸企业韧性和活力不断增强，新业态新模式加快发 展，创新转型步伐提速。产业链供应链面临挑战。美欧等加快出台制造业回迁计 划，加速产业链供应链本土布局，跨国公司调整产业链供应 链，全球双链面临新一轮重构，区域化、近岸化、本土化、 短链化趋势凸显。疫苗供应不足，制造业“缺芯”、物流受限、 运价高企，全球产业链供应链面临压力。 全球通胀持续高位运行。能源价格上涨加大主要经济体 的通胀压力，增加全球经济复苏的不确定性。世界银行今年 10 月发布《大宗商品市场展望》指出，能源价格在 2021 年 大涨逾 80%，并且仍将在 2022 年小幅上涨。IMF 指出，全 球通胀上行风险加剧，通胀前景存在巨大不确定性。""",
+        """6   进出等电位
+6.1   直线塔进出等电位
+6.1.1   对于直线塔， 作业人员不得从横担或绝缘子串垂直进出等电位， 可采用吊篮（吊椅、吊梯） 法、 绝缘软梯法等方式进出等电位。
+6.1.2   等电位作业人员进出等电位时与接地体及带电体的各电气间隙距离（包括安全距离、组合间隙） 均应满足表 1 、3 要求。
+6.1.3    吊篮（吊椅、吊梯）必须用吊拉绳索稳固悬吊； 吊篮（吊椅、吊梯）的移动速度必须用绝缘滑 车组严格控制， 做到均匀、慢速； 固定吊拉绳索的长度， 应准确计算或实际丈量， 保证等电位作业人员 即将进入等电位时人体最高部位不超过导线侧均压环。
+6.2   耐张塔进出等电位
+6.2.1   在耐张塔进出等电位时，作业人员可采用沿耐张绝缘子串方法或其它方法进出等电位。
+6.2.2   等电位作业人员沿绝缘子串移动时， 手与脚的位置必须保持对应一致， 且人体和工具短接的绝 缘子片数应符合 5.2.2 的要求。
+6.2.3   等电位作业人员所系安全带，应绑在手扶的绝缘子串上，并与等电位作业人员同步移动。
+6.2.4   等电位作业人员在进出等电位时，应在移动至距离带电体 3  片绝缘子时进行电位转移，方可进 行后续操作。
+6.2.5   带电作业人员与接地体及带电体的各电气间隙距离（包括安全距离、组合间隙）和经人体或工 具短接后的良好绝缘子片数均应满足表 4 要求，否则不能沿耐张绝缘子串进出等电位。
+7   作业中的注意事项
+7.1   等电位作业人员在带电作业过程中时，应避免身体动作幅度过大。
+7.2   等电位作业人员与地电位作业人员之间传递物品应采用绝缘工具，绝缘工具的有效长度，应满足 表 2 的规定。
+7.3   屏蔽服装应无破损和孔洞， 各部分应连接良好、可靠。发现破损和毛刺时应送有资质的试验单位 进行屏蔽服装电阻和屏蔽效率测量，测量结果满足本标准 5.3.1 条的要求后，方可使用。
+7.4   绝缘工具在使用前， 应使用 2500V 及以上兆欧表进行分段检测（电极宽 2cm，极间宽 2cm），阻值 不低于 700MΩ。""",
         ]
     # text = """"""
     for inum, text in enumerate(ls):
         print(inum)
         chunks = text_splitter.split_text(text)
         for chunk in chunks:
-            print(chunk)
+            print(f"分段：{chunk}")
