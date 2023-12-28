@@ -13,7 +13,7 @@ from configs import (
     TEXT_SPLITTER_NAME,
 )
 import importlib
-from text_splitter import zh_title_enhance as func_zh_title_enhance
+from text_splitter import zh_second_title_enhance
 import langchain.document_loaders
 from langchain.document_loaders.word_document import Docx2txtLoader 
 from langchain.docstore.document import Document
@@ -355,6 +355,7 @@ class KnowledgeFile:
                 i = i+1
 
         if zh_title_enhance:
+            docs = zh_second_title_enhance(docs)
             docs = customize_zh_title_enhance(docs)
             i = 1
             outputfile = file_name_without_extension + "_split.txt"
