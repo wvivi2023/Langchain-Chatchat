@@ -141,6 +141,7 @@ class ESKBService(KBService):
 
     def do_search(self, query:str, top_k: int, score_threshold: float):
         # 文本相似性检索
+        print(f"do_search,top_k:{top_k},score_threshold:{score_threshold}")
         docs = self.db_init.similarity_search_with_score(query=query,
                                          k=top_k)
         return docs

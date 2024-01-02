@@ -62,6 +62,7 @@ class FaissKBService(KBService):
                   top_k: int,
                   score_threshold: float = SCORE_THRESHOLD,
                   ) -> List[Document]:
+        print(f"do_search,top_k:{top_k},score_threshold:{score_threshold}")
         embed_func = EmbeddingsFunAdapter(self.embed_model)
         embeddings = embed_func.embed_query(query)
         with self.load_vector_store().acquire() as vs:

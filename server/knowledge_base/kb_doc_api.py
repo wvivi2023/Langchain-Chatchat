@@ -35,7 +35,9 @@ def search_docs(
     data = []
     if kb is not None:
         if query:
+            print(f"search_docs, query:{query}")  
             docs = kb.search_docs(query, top_k, score_threshold)
+            print(f"search_docs, docs:{docs}")
             data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
         elif file_name or metadata:
             data = kb.list_docs(file_name=file_name, metadata=metadata)
@@ -155,6 +157,8 @@ def upload_docs(
     failed_files = {}
     file_names = list(docs.keys())
 
+    print(f"upload_docs, file_names:{file_names}")
+
     # 先将上传的文件保存到磁盘
     for result in _save_files_in_thread(files, knowledge_base_name=knowledge_base_name, override=override):
         filename = result["data"]["file_name"]
@@ -164,7 +168,9 @@ def upload_docs(
         if filename not in file_names:
             file_names.append(filename)
 
+   
     # 对保存的文件进行向量化
+    print(f"upload_docs, to_vector_store:{to_vector_store}")
     if to_vector_store:
         result = update_docs(
             knowledge_base_name=knowledge_base_name,
