@@ -36,12 +36,12 @@ class ESKBService(KBService):
         except Exception as e:
             logger.error(f"Error 发生 : {e}")
             raise e
-        try:
-            # 首先尝试通过es_client_python创建
-            self.es_client_python.indices.create(index=self.index_name)
-        except BadRequestError as e:
-            logger.error("创建索引失败,重新")
-            logger.error(e)
+        # try:
+        #     # 首先尝试通过es_client_python创建
+        #     self.es_client_python.indices.create(index=self.index_name)
+        # except BadRequestError as e:
+        #     logger.error("创建索引失败,重新")
+        #     logger.error(e)
 
         try:
             # langchain ES 连接、创建索引
@@ -156,15 +156,17 @@ class ESKBService(KBService):
                 logger.error(f"ES Docs Delete Error! {e}")
 
     def do_delete_doc(self, kb_file, **kwargs):
+        base_file_name = os.path.basename(kb_file.filepath)
         if self.es_client_python.indices.exists(index=self.index_name):
             # 从向量数据库中删除索引(文档名称是Keyword)
             query = {
                 "query": {
                     "term": {
-                        "metadata.source.keyword": kb_file.filepath
+                        "metadata.source.keyword": base_file_name
                     }
                 }
             }
+            print(f"***do_delete_doc: kb_file.filepath:{kb_file.filepath}, base_file_name:{base_file_name}")
             # 注意设置size，默认返回10个。
             search_results = self.es_client_python.search(body=query, size=50)
             delete_list = [hit["_id"] for hit in search_results['hits']['hits']]

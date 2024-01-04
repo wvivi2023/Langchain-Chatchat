@@ -78,11 +78,12 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
             max_tokens=max_tokens,
             callbacks=[callback],
         )
-        docs = await run_in_threadpool(search_docs,
-                                       query=query,
-                                       knowledge_base_name=knowledge_base_name,
-                                       top_k=top_k,
-                                       score_threshold=score_threshold)
+        docs = search_docs(query, knowledge_base_name, 10, score_threshold)
+        # docs = await run_in_threadpool(search_docs,
+        #                                query=query,
+        #                                knowledge_base_name=knowledge_base_name,
+        #                                top_k=10,
+        #                                score_threshold=score_threshold)
 
         # 加入reranker
         if USE_RERANKER:
@@ -99,6 +100,7 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
                                                      query=query)
             print("---------after rerank------------------")
             print(docs)
+
         context = "\n".join([doc.page_content for doc in docs])
 
         if len(docs) == 0:  # 如果没有找到相关文档，使用empty模板

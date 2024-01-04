@@ -66,6 +66,7 @@ def list_files_from_folder(kb_name: str):
         if is_skiped_path(entry.path):
             return
 
+    
         if entry.is_symlink():
             target_path = os.path.realpath(entry.path)
             with os.scandir(target_path) as target_it:
@@ -79,10 +80,16 @@ def list_files_from_folder(kb_name: str):
                 for sub_entry in it:
                     process_entry(sub_entry)
 
-    with os.scandir(doc_path) as it:
-        for entry in it:
-            process_entry(entry)
+    #added by weiweiwang 2024.1.3 for catch exception
+    try:
+        print(f"list_files_from_folder,doc_path:{doc_path}")
+        with os.scandir(doc_path) as it:
+            for entry in it:
+                process_entry(entry)
 
+    except Exception as e:
+        logger.error(f"Error 发生 : {e}")
+    
     return result
 
 #PDFPlumberLoader

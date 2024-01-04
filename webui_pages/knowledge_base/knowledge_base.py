@@ -285,6 +285,7 @@ def knowledge_base_page(api: ApiRequest, is_lite: bool = None):
 
         st.divider()
 
+        #added by weiweiw 2024.1.3
         # cols = st.columns(3)
 
         # if cols[0].button(
@@ -318,6 +319,7 @@ def knowledge_base_page(api: ApiRequest, is_lite: bool = None):
         # with st.sidebar:
         #     keyword = st.text_input("查询关键字")
         #     top_k = st.slider("匹配条数", 1, 100, 3)
+        #ending added by weiweiw 2024.1.3
 
         st.write("文件内文档列表。双击进行修改，在删除列填入 Y 可删除对应行。")
         docs = []
