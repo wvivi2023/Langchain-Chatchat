@@ -40,6 +40,7 @@ def search_docs(
             print(f"search_docs, docs:{docs}")
             data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
         elif file_name or metadata:
+            print(f"search_docs, kb:{knowledge_base_name}, filename:{file_name}")  
             data = kb.list_docs(file_name=file_name, metadata=metadata)
     return data
 
