@@ -79,3 +79,4 @@ streamlit-aggrid>=0.3.4.post3
 watchdog>=3.0.0
 docx2txt
 elasticsearch
+PyPDF2
