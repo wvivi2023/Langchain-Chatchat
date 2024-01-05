@@ -57,8 +57,13 @@ def list_kbs_from_folder():
 
 def list_files_from_folder(kb_name: str):
     doc_path = get_doc_path(kb_name)
-    return [file for file in os.listdir(doc_path)
+    list = []
+    try:
+     list = [file for file in os.listdir(doc_path)
             if os.path.isfile(os.path.join(doc_path, file))]
+    except Exception as e:
+        logger.error(f"Error 发生 : {e}")
+    return list
 
 
 def load_embeddings(model: str = EMBEDDING_MODEL, device: str = embedding_device()):
