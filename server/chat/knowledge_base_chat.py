@@ -89,7 +89,7 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         #result = llm_chain(query)
         #print(f"请找出和question 最相似的一句话：{result}")
 
-        docs = search_docs(query, knowledge_base_name, top_k, score_threshold, model1)
+        docs = search_docs(query, knowledge_base_name, top_k, score_threshold)
         context = "\n".join([doc.page_content for doc in docs])
 
         #print(f"knowledge_base_chat_iterator,search docs context:{context}")
