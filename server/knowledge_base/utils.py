@@ -60,6 +60,10 @@ def list_files_from_folder(kb_name: str):
         for x in ["temp", "tmp", ".", "~$"]:
             if tail.startswith(x):
                 return True
+            
+        if "_source.txt" in tail.lower() or "_split.txt" in tail.lower():
+            return True   
+     
         return False
 
     def process_entry(entry):
