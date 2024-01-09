@@ -59,8 +59,8 @@ def list_files_from_folder(kb_name: str):
     doc_path = get_doc_path(kb_name)
     list = []
     try:
-     list = [file for file in os.listdir(doc_path)
-            if os.path.isfile(os.path.join(doc_path, file))]
+        list = [file for file in os.listdir(doc_path)
+            if os.path.isfile(os.path.join(doc_path, file)) and "_source.txt" not in file.lower() and  "_split.txt" not in file.lower()]
     except Exception as e:
         logger.error(f"Error 发生 : {e}")
     return list
