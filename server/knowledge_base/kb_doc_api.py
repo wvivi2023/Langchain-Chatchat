@@ -17,6 +17,11 @@ from server.db.repository.knowledge_file_repository import get_file_detail
 from langchain.docstore.document import Document
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from typing import List, Dict
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from configs import USE_RANKING
+import jieba
+
 
 
 def search_docs(
@@ -38,7 +43,42 @@ def search_docs(
             print(f"search_docs, query:{query}")  
             docs = kb.search_docs(query, top_k, score_threshold)
             print(f"search_docs, docs:{docs}")
-            data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
+
+            if USE_RANKING:
+                queryList = []
+                queryList.append(query)
+                doc_contents = [doc[0].page_content for doc in docs]
+
+                doc_contents = [" ".join(jieba.cut(doc)) for doc in doc_contents]
+                queryList = [" ".join(jieba.cut(doc)) for doc in queryList]
+                
+                #print(f"****** search_docs, doc_contents:{doc_contents}")
+                #print(f"****** search_docs, queryList:{queryList}")
+                
+                vectorizer = TfidfVectorizer()
+                tfidf_matrix = vectorizer.fit_transform(doc_contents)
+                print(f"****** search_docs, tfidf_matrix:{tfidf_matrix}")
+                query_vector = vectorizer.transform(queryList)
+                print(f"****** search_docs, query_vector:{query_vector}")
+                cosine_similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
+                print(f"****** search_docs, cosine_similarities:{cosine_similarities}")
+
+                # 将相似度分数与文档结合
+                docs_with_scores = [(doc, score) for doc, score in zip(docs, cosine_similarities)]
+                sorted_docs = sorted(docs_with_scores, key=lambda x: x[1], reverse=True)
+                print(f"****** search_docs, sorted_docs:{sorted_docs}")
+                data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in sorted_docs]
+
+                docs_with_scores = [(doc, score) for doc, score in zip(docs, cosine_similarities)]
+                sorted_docs = sorted(docs_with_scores, key=lambda x: x[1], reverse=True)
+                print(f"****** search_docs, sorted_docs:{sorted_docs}")
+                data = [DocumentWithVSId(*x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in sorted_docs]
+
+            else:
+                #data = [DocumentWithScore(**doc[0].dict(), score=score) for doc, score in sorted_docs]
+                #data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
+                data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
+
         elif file_name or metadata:
             print(f"search_docs, kb:{knowledge_base_name}, filename:{file_name}")  
             data = kb.list_docs(file_name=file_name, metadata=metadata)

@@ -80,3 +80,4 @@ watchdog>=3.0.0
 docx2txt
 elasticsearch
 PyPDF2
+jieba

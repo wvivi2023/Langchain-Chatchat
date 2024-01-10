@@ -17,6 +17,9 @@ RERANKER_MODEL = "bge-reranker-large"
 USE_RERANKER = False
 RERANKER_MAX_LENGTH = 1024
 
+# 是否启用精排
+USE_RANKING = False
+
 # 如果需要在 EMBEDDING_MODEL 中增加自定义的关键字时配置
 EMBEDDING_KEYWORD_FILE = "keywords.txt"
 EMBEDDING_MODEL_OUTPUT_PATH = "output"
