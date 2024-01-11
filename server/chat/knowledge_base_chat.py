@@ -1,4 +1,5 @@
 from fastapi import Body, Request
+from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 from fastapi.concurrency import run_in_threadpool
 from configs import (LLM_MODELS, 
@@ -145,5 +146,12 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
                              ensure_ascii=False)
         await task
 
-    return EventSourceResponse(knowledge_base_chat_iterator(query, top_k, history,model_name,prompt_name))
+    return StreamingResponse(knowledge_base_chat_iterator(query=query,
+                                                          top_k=top_k,
+                                                          history=history,
+                                                          model_name=model_name,
+                                                          prompt_name=prompt_name),
+                             media_type="text/event-stream")
+
+    #return EventSourceResponse(knowledge_base_chat_iterator(query, top_k, history,model_name,prompt_name))
 
