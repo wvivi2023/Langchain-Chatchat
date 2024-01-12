@@ -67,16 +67,8 @@ def search_docs(
                 docs_with_scores = [(doc, score) for doc, score in zip(docs, cosine_similarities)]
                 sorted_docs = sorted(docs_with_scores, key=lambda x: x[1], reverse=True)
                 print(f"****** search_docs, sorted_docs:{sorted_docs}")
-                data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in sorted_docs]
-
-                docs_with_scores = [(doc, score) for doc, score in zip(docs, cosine_similarities)]
-                sorted_docs = sorted(docs_with_scores, key=lambda x: x[1], reverse=True)
-                print(f"****** search_docs, sorted_docs:{sorted_docs}")
-                data = [DocumentWithVSId(*x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in sorted_docs]
-
+                data = [DocumentWithVSId(page_content = doc[0][0].page_content,id=doc[0][0].metadata.get("id"), score=doc[0][1],metadata=doc[0][0].metadata) for doc in docs_with_scores]
             else:
-                #data = [DocumentWithScore(**doc[0].dict(), score=score) for doc, score in sorted_docs]
-                #data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
                 data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
 
         elif file_name or metadata:
