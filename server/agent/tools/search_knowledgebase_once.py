@@ -19,7 +19,7 @@ import json
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from server.chat.knowledge_base_chat import knowledge_base_chat
-from configs import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, MAX_TOKENS
+from configs import FIRST_VECTOR_SEARCH_TOP_K, VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, MAX_TOKENS
 
 import asyncio
 from server.agent import model_container

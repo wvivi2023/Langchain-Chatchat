@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 from fastapi.concurrency import run_in_threadpool
 from configs import (LLM_MODELS, 
+                     FIRST_VECTOR_SEARCH_TOP_K,
                      VECTOR_SEARCH_TOP_K, 
                      SCORE_THRESHOLD, 
                      TEMPERATURE,
@@ -79,7 +80,7 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
             max_tokens=max_tokens,
             callbacks=[callback],
         )
-        docs = search_docs(query, knowledge_base_name, 10, score_threshold)
+        docs = search_docs(query, knowledge_base_name, FIRST_VECTOR_SEARCH_TOP_K, score_threshold)
         # docs = await run_in_threadpool(search_docs,
         #                                query=query,
         #                                knowledge_base_name=knowledge_base_name,

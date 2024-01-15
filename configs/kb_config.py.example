@@ -19,6 +19,7 @@ CHUNK_SIZE = 250
 OVERLAP_SIZE = 50
 
 # 知识库匹配向量数量
+FIRST_VECTOR_SEARCH_TOP_K = 10
 VECTOR_SEARCH_TOP_K = 3
 
 # 知识库匹配的距离阈值，取值范围在0-1之间，SCORE越小，距离越小从而相关度越高，

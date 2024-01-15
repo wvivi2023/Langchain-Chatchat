@@ -52,9 +52,6 @@ def search_docs(
                 doc_contents = [" ".join(jieba.cut(doc)) for doc in doc_contents]
                 queryList = [" ".join(jieba.cut(doc)) for doc in queryList]
                 
-                #print(f"****** search_docs, doc_contents:{doc_contents}")
-                #print(f"****** search_docs, queryList:{queryList}")
-                
                 vectorizer = TfidfVectorizer()
                 tfidf_matrix = vectorizer.fit_transform(doc_contents)
                 print(f"****** search_docs, tfidf_matrix:{tfidf_matrix}")
@@ -67,7 +64,14 @@ def search_docs(
                 docs_with_scores = [(doc, score) for doc, score in zip(docs, cosine_similarities)]
                 sorted_docs = sorted(docs_with_scores, key=lambda x: x[1], reverse=True)
                 print(f"****** search_docs, sorted_docs:{sorted_docs}")
-                data = [DocumentWithVSId(page_content = doc[0][0].page_content,id=doc[0][0].metadata.get("id"), score=doc[0][1],metadata=doc[0][0].metadata) for doc in docs_with_scores]
+                i = 0
+                for doc in sorted_docs:
+                    if i>=VECTOR_SEARCH_TOP_K:
+                        break
+                    else:
+                        data.append(DocumentWithVSId(page_content = doc[0][0].page_content,id=doc[0][0].metadata.get("id"), score=doc[0][1],metadata=doc[0][0].metadata))
+                        i = i+1
+                print(f"****** search_docs top K , sorted_docs:{data}")
             else:
                 data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
 
