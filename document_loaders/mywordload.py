@@ -7,6 +7,8 @@ from docx.oxml.text.paragraph import CT_P
 from docx.oxml.table import CT_Tbl
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
+#from langchain.document_loaders.unstructured import UnstructuredFileLoader
+#from langchain.document_loaders.word_document import Docx2txtLoader 
 
 class RapidWordLoader(UnstructuredFileLoader):
     def _get_elements(self) -> List:
@@ -57,6 +59,8 @@ class RapidWordLoader(UnstructuredFileLoader):
                 doc = docxDocument(filepath)
                 for block in iter_block_items(doc):
                     if isinstance(block,Paragraph):
+
+                        #print(f"Paragraph:{block.text}")
                         resp += (block.text + "\n\n")
                     elif isinstance(block, Table):
                         resp += read_table(block) + "\n"
@@ -68,10 +72,12 @@ class RapidWordLoader(UnstructuredFileLoader):
         
         text = word2text(self.file_path)
         from unstructured.partition.text import partition_text
-        return partition_text(text=text, **self.unstructured_kwargs)
-
+        return partition_text(text=text, paragraph_grouper = False, **self.unstructured_kwargs)
 
 if __name__ == "__main__":
-    loader = RapidWordLoader(file_path="/Users/wangvivi/Desktop/MySelf/AI/Test/国家电网公司供电企业组织机构规范标准.docx")
+    loader = RapidWordLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/设备类all/sb389/10kV带电作业用绝缘斗臂车.docx")
+    #loader = Docx2txtLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/设备类all/sb389/10kV带电作业用绝缘斗臂车.docx")
+    #loader = RapidWordLoader(file_path="/Users/wangvivi/Desktop/MySelf/AI/Test/这是一个测试文档_副本2.docx")
     docs = loader.load()
     print(docs)
+

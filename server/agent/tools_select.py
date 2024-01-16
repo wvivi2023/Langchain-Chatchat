@@ -19,7 +19,7 @@ tools = [
     Tool.from_function(
         func=weathercheck,
         name="weather_check",
-        description="",
+        description="Use this tools to answer questons about weather",
         args_schema=WhetherSchema,
     ),
     Tool.from_function(

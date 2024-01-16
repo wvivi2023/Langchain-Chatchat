@@ -350,7 +350,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                         temperature=temperature,
                                         ):
                     try:
+                        print(f"1111自定义Agent问答, d:{d}")
                         d = json.loads(d)
+                        print(f"22222自定义Agent问答, d:{d}")
                     except:
                         pass
                     if error_msg := check_error_msg(d):  # check whether error occured

@@ -17,7 +17,7 @@ from server.chat.utils import History
 import json
 from server.agent import model_container
 from server.knowledge_base.kb_service.base import get_kb_details
-
+from fastapi.responses import StreamingResponse
 
 async def agent_chat(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),
                      history: List[History] = Body([],
@@ -29,7 +29,7 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                                                    ),
                      stream: bool = Body(False, description="流式输出"),
                      model_name: str = Body(LLM_MODELS[0], description="LLM 模型名称。"),
-                     temperature: float = Body(TEMPERATURE, description="LLM 采样温度", ge=0.0, le=1.0),
+                     temperature: float = Body(TEMPERATURE, description="LLM 采样温度", ge=0.0, le=0.9),
                      max_tokens: Optional[int] = Body(None, description="限制LLM生成Token数量，默认None代表模型最大值"),
                      prompt_name: str = Body("default",
                                              description="使用的prompt模板名称(在configs/prompt_config.py中配置)"),
@@ -59,6 +59,8 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
         kb_list = {x["kb_name"]: x for x in get_kb_details()}
         model_container.DATABASE = {name: details['kb_info'] for name, details in kb_list.items()}
 
+        print(f"agent_chat_iterator model_container.DATABASE:{model_container.DATABASE}")
+        print(f"agent_chat_iterator temperature:{temperature}")
         if Agent_MODEL:
             ## 如果有指定使用Agent模型来完成任务
             model_agent = get_ChatOpenAI(
@@ -68,8 +70,10 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                 callbacks=[callback],
             )
             model_container.MODEL = model_agent
+            print(f"111 agent_chat_iterator :model_container.MODEL:{ model_container.MODEL}")
         else:
             model_container.MODEL = model
+            print(f"222 agent_chat_iterator :model_container.MODEL:{model_container.MODEL}")
 
         prompt_template = get_prompt_template("agent_chat", prompt_name)
         prompt_template_agent = CustomPromptTemplate(
@@ -91,6 +95,7 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                 memory.chat_memory.add_ai_message(message.content)
 
         if "chatglm3" in model_container.MODEL.model_name:
+            print(f"model_container.MODEL.model_name is chatglm3")
             agent_executor = initialize_glm3_agent(
                 llm=model,
                 tools=tools,
@@ -180,8 +185,13 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
             yield json.dumps({"answer": answer, "final_answer": final_answer}, ensure_ascii=False)
         await task
 
-    return EventSourceResponse(agent_chat_iterator(query=query,
+    return StreamingResponse(agent_chat_iterator(query=query,
                                                  history=history,
                                                  model_name=model_name,
                                                  prompt_name=prompt_name),
-                             )
+                             media_type="text/event-stream")
+    # return EventSourceResponse(agent_chat_iterator(query=query,
+    #                                              history=history,
+    #                                              model_name=model_name,
+    #                                              prompt_name=prompt_name),
+    #                          )

@@ -27,7 +27,7 @@ from server.agent import model_container
 from pydantic import BaseModel, Field
 
 ## 使用和风天气API查询天气
-KEY = "ac880e5a877042809ac7ffdd19d95b0d"
+KEY = "1234567890wangweiwei"
 # key长这样，这里提供了示例的key，这个key没法使用，你需要自己去注册和风天气的账号，然后在这里填入你的key
 
 
