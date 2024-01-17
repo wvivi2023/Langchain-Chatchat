@@ -91,7 +91,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         _good_splits = []
         _separator = "" if self._keep_separator else separator
         for s in splits:
-            print(f"***s:{s},len:{self._length_function(s)}")
+            #print(f"***s:{s},len:{self._length_function(s)}")
             if self._length_function(s) < self._chunk_size:
                 _good_splits.append(s)
                 #print(f"***_good_splits.append(s):{s}")

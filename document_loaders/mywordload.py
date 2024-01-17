@@ -7,8 +7,10 @@ from docx.oxml.text.paragraph import CT_P
 from docx.oxml.table import CT_Tbl
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
-#from langchain.document_loaders.unstructured import UnstructuredFileLoader
-#from langchain.document_loaders.word_document import Docx2txtLoader 
+from unstructured.partition.text import partition_text
+import unstructured.cleaners.core
+from .customercore import custom_group_broken_paragraphs
+unstructured.cleaners.core.group_broken_paragraphs = custom_group_broken_paragraphs
 
 class RapidWordLoader(UnstructuredFileLoader):
     def _get_elements(self) -> List:
@@ -59,7 +61,6 @@ class RapidWordLoader(UnstructuredFileLoader):
                 doc = docxDocument(filepath)
                 for block in iter_block_items(doc):
                     if isinstance(block,Paragraph):
-
                         #print(f"Paragraph:{block.text}")
                         resp += (block.text + "\n\n")
                     elif isinstance(block, Table):
@@ -71,8 +72,8 @@ class RapidWordLoader(UnstructuredFileLoader):
             return resp    
         
         text = word2text(self.file_path)
-        from unstructured.partition.text import partition_text
-        return partition_text(text=text, paragraph_grouper = False, **self.unstructured_kwargs)
+        listText =  partition_text(text=text, **self.unstructured_kwargs)
+        return listText
 
 if __name__ == "__main__":
     loader = RapidWordLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/设备类all/sb389/10kV带电作业用绝缘斗臂车.docx")
