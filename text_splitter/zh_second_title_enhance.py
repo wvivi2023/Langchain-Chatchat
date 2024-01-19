@@ -17,7 +17,7 @@ def get_fist_level_title(
     if ENDS_IN_PUNCT_RE.search(first_line) is not None:
         return ""
   
-    FIRST_TITLE = r'((?<!\.|[a-zA-Z0-9]|\S)\d+[^\S\n]+[^\s\.]+\S+)'
+    FIRST_TITLE = r'((?<!.)\d+[^\S\n]+[^\s\.]+\S+)'
     TITLE_PUNCT_RE = re.compile(FIRST_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return first_line
@@ -40,7 +40,7 @@ def get_second_level_title(
     if ENDS_IN_PUNCT_RE.search(first_line) is not None:
        return ""
            
-    Second_TITLE = r'((?<!\.|[a-zA-Z0-9]|\S)[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))'
+    Second_TITLE = r'((?<!.)[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))'
     TITLE_PUNCT_RE = re.compile(Second_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return first_line
@@ -50,6 +50,25 @@ def get_second_level_title(
             if TITLE_PUNCT_RE.search(Second_line) is not None:
                 return Second_line
     return ""
+
+#judge if it is 2nd level content
+def is_second_level_content(
+        text: str,
+) -> bool:
+    # 文本长度为0的话，肯定不是title
+    if len(text) == 0:
+        print("Not a title. Text is empty.")
+        return False
+    
+    splitlines = text.splitlines()
+    first_line = splitlines[0]
+   
+    Second_TITLE = r'((?<!.)[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))|(?<!.)(表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)'
+    TITLE_PUNCT_RE = re.compile(Second_TITLE)
+    if TITLE_PUNCT_RE.search(first_line) is not None:
+        return True
+            
+    return False
 
 #judge if it is 3rd level content
 def is_third_level_content(
@@ -63,7 +82,7 @@ def is_third_level_content(
     splitlines = text.splitlines()
     first_line = splitlines[0]
    
-    Third_TITLE = r'((?<!\.|[a-zA-Z0-9]|\S)\s*[0-9]+\s*\.\s*[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))'
+    Third_TITLE = r'((?<!.)[0-9]+\s*\.\s*[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))|((?<!.)表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)'
     TITLE_PUNCT_RE = re.compile(Third_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return True
@@ -73,41 +92,52 @@ def is_third_level_content(
 #给三级被分开的内容 增加二级标题
 def zh_second_title_enhance(docs: Document) -> Document:
     title = None
+    print(f"zh_second_title_enhance ....")
     if len(docs) > 0:
         for doc in docs:
+            print(f"zh_second_title_enhance: {doc}")
             second_title = get_second_level_title(doc.page_content)
             if second_title:
                 title = second_title
+                print(f"title: {title}")
             elif title:
+                print(f"title is not none")
                 temp_third_content = is_third_level_content(doc.page_content)
                 if temp_third_content:
+                    print(f"is_third_level_content : {temp_third_content}")
+                    doc.page_content = f"{title} {doc.page_content}"
+                else:
+                    title = None
+            print(f"final title: {title}")
+        return docs
+    else:
+        print("zh_second_title_enhance 文件不存在")
+
+#给二级被分开的内容 增加一级标题
+def zh_first_title_enhance(docs: Document) -> Document:
+    title = None
+    if len(docs) > 0:
+        for doc in docs:
+            first_title = get_fist_level_title(doc.page_content)
+            if first_title:
+                title = first_title
+            elif title:
+                temp_second_content = is_second_level_content(doc.page_content)
+                if temp_second_content:
                     doc.page_content = f"{title} {doc.page_content}"
                 else:
                     title = None
         return docs
     else:
-        print("文件不存在")
+        print("zh_first_title_enhance 文件不存在")
 
 
 if __name__ == "__main__":
-    str =  """6   进出等电位
-6.1   直线塔进出等电位
-6.1.1   对于直线塔， 作业人员不得从横担或绝缘子串垂直进出等电位， 可采用吊篮（吊椅、吊梯） 法、 绝缘软梯法等方式进出等电位。
-6.1.2   等电位作业人员进出等电位时与接地体及带电体的各电气间隙距离（包括安全距离、组合间隙） 均应满足表 1 、3 要求。
-6.1.3    吊篮（吊椅、吊梯）必须用吊拉绳索稳固悬吊； 吊篮（吊椅、吊梯）的移动速度必须用绝缘滑 车组严格控制， 做到均匀、慢速； 固定吊拉绳索的长度， 应准确计算或实际丈量， 保证等电位作业人员 即将进入等电位时人体最高部位不超过导线侧均压环。
-6.2   耐张塔进出等电位
-6.2.1   在耐张塔进出等电位时，作业人员可采用沿耐张绝缘子串方法或其它方法进出等电位。
-6.2.2   等电位作业人员沿绝缘子串移动时， 手与脚的位置必须保持对应一致， 且人体和工具短接的绝 缘子片数应符合 5.2.2 的要求。
-6.2.3   等电位作业人员所系安全带，应绑在手扶的绝缘子串上，并与等电位作业人员同步移动。
-6.2.4   等电位作业人员在进出等电位时，应在移动至距离带电体 3  片绝缘子时进行电位转移，方可进 行后续操作。
-6.2.5   带电作业人员与接地体及带电体的各电气间隙距离（包括安全距离、组合间隙）和经人体或工 具短接后的良好绝缘子片数均应满足表 4 要求，否则不能沿耐张绝缘子串进出等电位。
-7   作业中的注意事项
-7.1   等电位作业人员在带电作业过程中时，应避免身体动作幅度过大。
-7.2   等电位作业人员与地电位作业人员之间传递物品应采用绝缘工具，绝缘工具的有效长度，应满足 表 2 的规定。
-7.3   屏蔽服装应无破损和孔洞， 各部分应连接良好、可靠。发现破损和毛刺时应送有资质的试验单位 进行屏蔽服装电阻和屏蔽效率测量，测量结果满足本标准 5.3.1 条的要求后，方可使用。
-7.4   绝缘工具在使用前， 应使用 2500V 及以上兆欧表进行分段检测（电极宽 2cm，极间宽 2cm），阻值 不低于 700MΩ。"""
+    str =  """8.1.3  采购过程\n为统筹资产管理相关的采购需求，统一设备采购标准，保障采购的产品和服务的质量，应策划、实 施和控制电网实物资产相关的采购过程。采购过程包括招标采购、仓储配送及到货验收等。对产品和服 务的采购以及供应商的选择等，应按照 8.3 外包的要求进行管理。策划、实施和控制时应满足：\na)  应统计和分析建设、运维阶段的设备质量信息，如设备缺陷信息、故障信息及使用寿命等，用 于指导设备采购标准的制定。应系统性评估企业的采购需求以及内外部机会，确定采购策略， 从而降低企业的整体成本，发挥企业的内外部优势，如实施战略采购、超市化采购等；\nb)  库存物资应进行统一管理，建立包含不同业务形成的实物库存的台账，如利用 ERP 系统建立库 存物资“一本账 ”，准确反映实体仓库内库存实物信息。应根据合同交付和物资使用的要求， 统一进行物资配送的调度和协调，以满足安全、准时、快捷、服务优质等要求；\nc)  应综合考虑设备的价值、重要性、复杂性等因素，确定监造设备范围（如变压器、换流变、串\nQ/GDW 12219—2022\n联补偿装置、换流阀等）和监造方式（如驻厂监造、关键点见证等）；物资抽检应覆盖所有供 应商及所有物资类别；现场验收应按照策划的方式进行。应保留监造、抽检和现场验收相关的 文件和过程控制记录。' metadata={'source': '/home/bns001/Langchain-Chatchat_0.2.9/knowledge_base/test/content/资产全寿命周期管理体系实施指南.docx'}
+title: 为统筹资产管理相关的采购需求，统一设备采购标准，保障采购的产品和服务的质量，应策划、实 施和控制电网实物资产相关的采购过程。采购过程包括招标采购、仓储配送及到货验收等。对产品和服 务的采购以及供应商的选择等，应按照 8.3 外包的要求进行管理。策划、实施和控制时应满足：
+"""
     title = is_third_level_content(str)
     print(title)
-    title = get_second_level_title(str)
-    print(title)
+    #title = get_second_level_title(str)
+    #print(title)
     #zh_second_title_enhance()

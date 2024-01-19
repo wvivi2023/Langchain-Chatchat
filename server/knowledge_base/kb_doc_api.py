@@ -4,7 +4,7 @@ from fastapi import File, Form, Body, Query, UploadFile
 from configs import (DEFAULT_VS_TYPE, EMBEDDING_MODEL,
                      VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD,
                      CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE,
-                     logger, log_verbose, )
+                     logger, log_verbose,FIRST_VECTOR_SEARCH_TOP_K )
 from server.utils import BaseResponse, ListResponse, run_in_thread_pool
 from server.knowledge_base.utils import (validate_kb_name, list_files_from_folder, get_file_path,
                                          files2docs_in_thread, KnowledgeFile)
@@ -41,7 +41,7 @@ def search_docs(
     if kb is not None:
         if query:
             print(f"search_docs, query:{query}")  
-            docs = kb.search_docs(query, top_k, score_threshold)
+            docs = kb.search_docs(query, FIRST_VECTOR_SEARCH_TOP_K, score_threshold)
             print(f"search_docs, docs:{docs}")
 
             if USE_RANKING:
@@ -66,7 +66,7 @@ def search_docs(
                 print(f"****** search_docs, sorted_docs:{sorted_docs}")
                 i = 0
                 for doc in sorted_docs:
-                    if i>=VECTOR_SEARCH_TOP_K:
+                    if i>=top_k:
                         break
                     else:
                         data.append(DocumentWithVSId(page_content = doc[0][0].page_content,id=doc[0][0].metadata.get("id"), score=doc[0][1],metadata=doc[0][0].metadata))
