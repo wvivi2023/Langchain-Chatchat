@@ -6,6 +6,7 @@ from langchain.schema import Document
 from langchain.vectorstores.elasticsearch import ElasticsearchStore
 from configs import KB_ROOT_PATH, EMBEDDING_MODEL, EMBEDDING_DEVICE, CACHED_VS_NUM
 from server.knowledge_base.kb_service.base import KBService, SupportedVSType
+from server.knowledge_base.utils import KnowledgeFile
 from server.utils import load_local_embeddings
 from elasticsearch import Elasticsearch,BadRequestError
 from configs import logger
@@ -15,7 +16,7 @@ class ESKBService(KBService):
 
     def do_init(self):
         self.kb_path = self.get_kb_path(self.kb_name)
-        self.index_name = self.kb_path.split("/")[-1]
+        self.index_name = os.path.split(self.kb_path)[-1]
         self.IP = kbs_config[self.vs_type()]['host']
         self.PORT = kbs_config[self.vs_type()]['port']
         self.user = kbs_config[self.vs_type()].get("user",'')
@@ -36,12 +37,21 @@ class ESKBService(KBService):
         except Exception as e:
             logger.error(f"Error 发生 : {e}")
             raise e
-        # try:
-        #     # 首先尝试通过es_client_python创建
-        #     self.es_client_python.indices.create(index=self.index_name)
-        # except BadRequestError as e:
-        #     logger.error("创建索引失败,重新")
-        #     logger.error(e)
+        try:
+            # 首先尝试通过es_client_python创建
+            mappings = {
+                "properties": {
+                    "dense_vector": {
+                        "type": "dense_vector",
+                        "dims": self.dims_length,
+                        "index": True
+                    }
+                }
+            }
+            self.es_client_python.indices.create(index=self.index_name, mappings=mappings)
+        except BadRequestError as e:
+            logger.error("创建索引失败,重新")
+            logger.error(e)
 
         try:
             # langchain ES 连接、创建索引
@@ -80,9 +90,9 @@ class ESKBService(KBService):
         except Exception as e:
             logger.error("创建索引失败...")
             logger.error(e)
-            # raise e 
-            
-        
+            # raise e
+
+
 
     @staticmethod
     def get_kb_path(knowledge_base_name: str):
@@ -223,7 +233,12 @@ class ESKBService(KBService):
             shutil.rmtree(self.kb_path)
 
 
-
+if __name__ == '__main__':
+    esKBService = ESKBService("test")
+    #esKBService.clear_vs()
+    #esKBService.create_kb()
+    esKBService.add_doc(KnowledgeFile(filename="README.md", knowledge_base_name="test"))
+    print(esKBService.search_docs("如何启动api服务"))
 
 
 
