@@ -11,7 +11,7 @@ from langchain.schema.language_model import BaseLanguageModel
 from typing import List, Any, Optional
 from langchain.prompts import PromptTemplate
 from server.chat.knowledge_base_chat import knowledge_base_chat
-from configs import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, MAX_TOKENS
+from configs import FIRST_VECTOR_SEARCH_TOP_K, VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, MAX_TOKENS
 import asyncio
 from server.agent import model_container
 from pydantic import BaseModel, Field

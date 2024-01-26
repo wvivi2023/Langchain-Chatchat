@@ -123,7 +123,7 @@ LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "UnstructuredPowerPointLoader": ['.ppt', '.pptx'],
                "EverNoteLoader": ['.enex'],
                "UnstructuredFileLoader": ['.txt'],
-               "Docx2txtLoader":['.doc'],
+               "UnstructuredWordDocumentLoader":['.doc'],
                "RapidWordLoader":['.docx']
                }
 SUPPORTED_EXTS = [ext for sublist in LOADER_DICT.values() for ext in sublist]

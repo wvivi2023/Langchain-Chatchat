@@ -5,11 +5,12 @@ from docx.document import Document as _Document
 from docx.table import _Cell
 from docx.oxml.text.paragraph import CT_P
 from docx.oxml.table import CT_Tbl
+from docx.oxml.table import CT_TblGrid
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 from unstructured.partition.text import partition_text
 import unstructured.cleaners.core
-from .customercore import custom_group_broken_paragraphs
+from customercore import custom_group_broken_paragraphs
 unstructured.cleaners.core.group_broken_paragraphs = custom_group_broken_paragraphs
 
 class RapidWordLoader(UnstructuredFileLoader):
@@ -32,6 +33,10 @@ class RapidWordLoader(UnstructuredFileLoader):
                     yield Paragraph(child, parent)
                 elif isinstance(child, CT_Tbl):
                     yield Table(child, parent)
+                elif isinstance(child, CT_TblGrid):
+                    yield Table(child, parent)
+                else:
+                    print(f"都不属于")
 
         def read_table(table):
             # 获取表格列标题
@@ -61,7 +66,7 @@ class RapidWordLoader(UnstructuredFileLoader):
                 doc = docxDocument(filepath)
                 for block in iter_block_items(doc):
                     if isinstance(block,Paragraph):
-                        #print(f"Paragraph:{block.text}")
+                        print(f"Paragraph:{block.text}")
                         resp += (block.text + "\n\n")
                     elif isinstance(block, Table):
                         resp += read_table(block) + "\n"
@@ -76,7 +81,7 @@ class RapidWordLoader(UnstructuredFileLoader):
         return listText
 
 if __name__ == "__main__":
-    loader = RapidWordLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/设备类all/sb389/10kV带电作业用绝缘斗臂车.docx")
+    loader = RapidWordLoader(file_path="/Users/wangvivi/Downloads/输变电设备风险评估导则.docx")
     #loader = Docx2txtLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/设备类all/sb389/10kV带电作业用绝缘斗臂车.docx")
     #loader = RapidWordLoader(file_path="/Users/wangvivi/Desktop/MySelf/AI/Test/这是一个测试文档_副本2.docx")
     docs = loader.load()
