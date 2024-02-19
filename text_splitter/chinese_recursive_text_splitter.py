@@ -69,10 +69,12 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
             text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过表 A.2
             text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
             text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
+            text = re.sub(r'(\n+第\s*\S+\s*条(:|：))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
             text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
             
             text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\1", text)  # 再通过 1.2.3 
             text = re.sub(r'(\n+(（一）|（二）|（三）|（四）|（五）|（六）|（七）|（八）|（九）|（十）|（十一）|（十二）|（十三）|（十四）|（十五）|（十六）|（十七）|（十八）|（十九）|（二十）))', r"\n\n\n\n\n\n\1", text)  # 通过第 条
+            text = re.sub(r'(\n+(\(一\)|\(二\)|\(三\)|\(四\)|\(五\)|\(六\)|\(七\)|\(八\)|\(九\)|\(十\)|\(十一\)|\(十二\)|\(十三\)|\(十四\)|\(十五\)|\(十六\)|\(十七\)|\(十八\)|\(十九\)|\(二十\)))', r"\n\n\n\n\n\n\1", text)  # 通过第 条
             text = text.rstrip()  # 段尾如果有多余的\n就去掉它
             self.is_recursive = True
         for i, _s in enumerate(separators):

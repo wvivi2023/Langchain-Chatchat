@@ -33,7 +33,7 @@ async def document():
 
 def create_app(run_mode: str = None):
     app = FastAPI(
-        title="Langchain-Chatchat API Server",
+        title="思极大模型 API Server",
         version=VERSION
     )
     MakeFastAPIOffline(app)
