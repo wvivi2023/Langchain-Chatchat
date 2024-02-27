@@ -11,6 +11,7 @@ from configs import (
     TEXT_SPLITTER_NAME,
 )
 import importlib
+from text_splitter import zh_third_title_enhance
 from text_splitter import zh_second_title_enhance
 from text_splitter import zh_first_title_enhance
 import langchain.document_loaders
@@ -371,6 +372,7 @@ class KnowledgeFile:
             return []
         #先给二级下 被分开的三级目录分块 增加二级标题，再给分开的二级目录增加一级标题，然后给整个文档的所有分块增加文档标题分块       
         if zh_title_enhance:
+            docs = zh_third_title_enhance(docs)
             docs = zh_second_title_enhance(docs)
             docs = zh_first_title_enhance(docs)
             docs = customize_zh_title_enhance(docs)

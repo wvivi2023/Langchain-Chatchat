@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 First_SEPARATOE = "\n\n\n\n\n\n\n\n\n\n"
 Second_SEPARATOE = "\n\n\n\n\n\n\n\n"
 Third_SEPARATOE = "\n\n\n\n\n\n"
+Fourth_SEPARATOE = "\n\n\n\n"
 def _split_text_with_regex_from_end(
         text: str, separator: str, keep_separator: bool
 ) -> List[str]:
@@ -41,7 +42,8 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         self._separators = separators or [
             First_SEPARATOE,
             Second_SEPARATOE,
-            Third_SEPARATOE
+            Third_SEPARATOE,
+            Fourth_SEPARATOE
             #"\n\n",
             #"\n",
             # "。|！|？",
@@ -60,21 +62,26 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
         separator = separators[-1]
         new_separators = []
         if self.is_recursive == False:
+            #一级目录
             text = re.sub(r'(\n+前\s+言\n+)',  r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过前言分块
             text = re.sub(r'(\n+\d+[^\S\n]+[^\s\.]+)', r"\n\n\n\n\n\n\n\n\n\n\1", text) #通过1 这样的
             text = re.sub(r'(手工分段\*\*\s*)', r"\n\n\n\n\n\n\n\n\n\n", text)  # 将“手工分段**”替换
             text = re.sub(r'(\n+第\s*\S+\s*章\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过第 章
-            #text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)', r"\n\n\n\n\n\n\n\n\n\n\1", text)  # 通过表 A.2
             
+            #二级目录
             text = re.sub(r'(\n+表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过表 A.2
             text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过\n1.2 这样的章和节来分块
             text = re.sub(r'(\n+第\s*\S+\s*条\s+)', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
             text = re.sub(r'(\n+第\s*\S+\s*条(:|：))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
             text = re.sub(r'(\n+(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))', r"\n\n\n\n\n\n\n\n\1", text)  # 通过第 条
             
+            #三级目录
             text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\n\n\1", text)  # 再通过 1.2.3 
-            text = re.sub(r'(\n+(（一）|（二）|（三）|（四）|（五）|（六）|（七）|（八）|（九）|（十）|（十一）|（十二）|（十三）|（十四）|（十五）|（十六）|（十七）|（十八）|（十九）|（二十）))', r"\n\n\n\n\n\n\1", text)  # 通过第 条
-            text = re.sub(r'(\n+(\(一\)|\(二\)|\(三\)|\(四\)|\(五\)|\(六\)|\(七\)|\(八\)|\(九\)|\(十\)|\(十一\)|\(十二\)|\(十三\)|\(十四\)|\(十五\)|\(十六\)|\(十七\)|\(十八\)|\(十九\)|\(二十\)))', r"\n\n\n\n\n\n\1", text)  # 通过第 条
+            text = re.sub(r'(\n+(（一）|（二）|（三）|（四）|（五）|（六）|（七）|（八）|（九）|（十）|（十一）|（十二）|（十三）|（十四）|（十五）|（十六）|（十七）|（十八）|（十九）|（二十）))', r"\n\n\n\n\n\n\1", text) 
+            text = re.sub(r'(\n+(\(一\)|\(二\)|\(三\)|\(四\)|\(五\)|\(六\)|\(七\)|\(八\)|\(九\)|\(十\)|\(十一\)|\(十二\)|\(十三\)|\(十四\)|\(十五\)|\(十六\)|\(十七\)|\(十八\)|\(十九\)|\(二十\)))', r"\n\n\n\n\n\n\1", text) 
+            
+            #四级目录
+            text = re.sub(r'(\n+(?<!\.|[a-zA-Z0-9])[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))', r"\n\n\n\n\1", text)  # 再通过 1.2.3
             text = text.rstrip()  # 段尾如果有多余的\n就去掉它
             self.is_recursive = True
         for i, _s in enumerate(separators):

@@ -17,7 +17,7 @@ def get_fist_level_title(
     if ENDS_IN_PUNCT_RE.search(first_line) is not None:
         return ""
   
-    FIRST_TITLE = r'((?<!.)\d+[^\S\n]+[^\s\.]+\S+)'
+    FIRST_TITLE = r'((?<!.)\d+[^\S\n]+[^\s\.]+\S+|(?<!.)第\s*\S+\s*章\s+)'
     TITLE_PUNCT_RE = re.compile(FIRST_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return first_line
@@ -40,7 +40,7 @@ def get_second_level_title(
     if ENDS_IN_PUNCT_RE.search(first_line) is not None:
        return ""
            
-    Second_TITLE = r'((?<!.)[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))'
+    Second_TITLE = r'((?<!.)[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9])|(?<!.)第\s*\S+\s*条\s+|(?<!.)第\s*\S+\s*条(:|：)|(?<!.)(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、))'
     TITLE_PUNCT_RE = re.compile(Second_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return first_line
@@ -63,7 +63,7 @@ def is_second_level_content(
     splitlines = text.splitlines()
     first_line = splitlines[0]
    
-    Second_TITLE = r'((?<!.)[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))|(?<!.)(表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)'
+    Second_TITLE = r'((?<!.)[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))|(?<!.)(表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)|(?<!.)第\s*\S+\s*条\s+|(?<!.)第\s*\S+\s*条(:|：)|(?<!.)(一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|十一、|十二、|十三、|十四、|十五、|十六、|十七、|十八、|十九、|二十、)'
     TITLE_PUNCT_RE = re.compile(Second_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return True
@@ -82,13 +82,83 @@ def is_third_level_content(
     splitlines = text.splitlines()
     first_line = splitlines[0]
    
-    Third_TITLE = r'((?<!.)[0-9]+\s*\.\s*[0-9]+\s*\.\s*[0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))|((?<!.)表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)'
+    Third_TITLE = r'((?<!.)[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))|((?<!.)表\s*[A-Za-z0-9]+(\s*\.\s*[A-Za-z0-9]+)*\s+)|((?<!.)（一）|（二）|（三）|（四）|（五）|（六）|（七）|（八）|（九）|（十）|（十一）|（十二）|（十三）|（十四）|（十五）|（十六）|（十七）|（十八）|（十九）|（二十）)|((?<!.)(\(一\)|\(二\)|\(三\)|\(四\)|\(五\)|\(六\)|\(七\)|\(八\)|\(九\)|\(十\)|\(十一\)|\(十二\)|\(十三\)|\(十四\)|\(十五\)|\(十六\)|\(十七\)|\(十八\)|\(十九\)|\(二十\)))'
     TITLE_PUNCT_RE = re.compile(Third_TITLE)
     if TITLE_PUNCT_RE.search(first_line) is not None:
         return True
             
     return False
+
+def get_third_level_title(
+        text: str,
+) -> str:
+    # 文本长度为0的话，肯定不是title
+    if len(text) == 0 and len (text)>= 25:
+        print("Not a title. Text is empty or longer than 25.")
+        return ""
     
+    splitlines = text.splitlines()
+    first_line = splitlines[0]
+    # 文本中有标点符号，就不是title
+    ENDS_IN_PUNCT_PATTERN = r"[^\w\s]\Z"
+    ENDS_IN_PUNCT_RE = re.compile(ENDS_IN_PUNCT_PATTERN)
+    if ENDS_IN_PUNCT_RE.search(first_line) is not None:
+       return ""
+           
+    Third_TITLE = r'((?<!.)[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))'
+    TITLE_PUNCT_RE = re.compile(Third_TITLE)
+    if TITLE_PUNCT_RE.search(first_line) is not None:
+        return first_line
+    else:
+        if len(splitlines)>1:
+            Second_line = splitlines[1]
+            if TITLE_PUNCT_RE.search(Second_line) is not None:
+                return Second_line
+    return ""
+
+#judge if it is 4th level content
+def is_fourth_level_content(
+        text: str,
+) -> bool:
+    # 文本长度为0的话，肯定不是title
+    if len(text) == 0:
+        print("Not a title. Text is empty.")
+        return False
+    
+    splitlines = text.splitlines()
+    first_line = splitlines[0]
+   
+    Third_TITLE = r'((?<!.)[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+\s*\.\s*[a-zA-Z0-9]+[^\S\n]+[^\s\.]+(?!\.|[a-zA-Z0-9]))'
+    TITLE_PUNCT_RE = re.compile(Third_TITLE)
+    if TITLE_PUNCT_RE.search(first_line) is not None:
+        return True
+            
+    return False
+
+#给四级被分开的内容 增加三级标题
+def zh_third_title_enhance(docs: Document) -> Document:
+    title = None
+    print(f"zh_third_title_enhance ....")
+    if len(docs) > 0:
+        for doc in docs:
+            print(f"zh_third_title_enhance: {doc}")
+            third_title = get_third_level_title(doc.page_content)
+            if third_title:
+                title = third_title
+                print(f"title: {title}")
+            elif title:
+                print(f"title is not none")
+                temp_fourth_content = is_fourth_level_content(doc.page_content)
+                if temp_fourth_content:
+                    print(f"is_fourth_level_content : {temp_fourth_content}")
+                    doc.page_content = f"{title} {doc.page_content}"
+                else:
+                    title = None
+            print(f"final title: {title}")
+        return docs
+    else:
+        print("zh_third_title_enhance 文件不存在")
+
 #给三级被分开的内容 增加二级标题
 def zh_second_title_enhance(docs: Document) -> Document:
     title = None
