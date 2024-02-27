@@ -36,3 +36,6 @@ class DefaultKBService(KBService):
 
     def do_delete_doc(self):
         pass
+
+    def searchbyContent(self):
+        pass

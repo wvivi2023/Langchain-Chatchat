@@ -80,6 +80,20 @@ def search_docs(
             data = kb.list_docs(file_name=file_name, metadata=metadata)
     return data
 
+def search_content(
+        query: str = Body("", description="用户输入", examples=["国网安徽信通准入手续"]),
+        knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
+        top_k: int = Body(2, description="匹配文档数"),
+        )-> List[Document]:
+    print("kb_doc_api search_content")
+    kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
+    if kb is not None:
+        if query:
+            docs = kb.search_content(query, top_k)
+            print(f"search_content, docs:{docs}")
+            return docs
+    else:
+        return None
 
 def update_docs_by_id(
         knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),

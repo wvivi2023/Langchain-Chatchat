@@ -181,6 +181,14 @@ class KBService(ABC):
         docs = self.do_search(query, top_k, score_threshold)
         return docs
 
+    def search_content(self,
+                    query: str,
+                    top_k: int,
+                    )->List[Document]:
+        print("KBService search_content")
+        docs = self.searchbyContent(query,top_k)
+        return docs
+    
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         return []
 
@@ -266,6 +274,16 @@ class KBService(ABC):
         """
         pass
 
+    @abstractmethod
+    def searchbyContent(self,
+                    query: str,
+                    top_k: int,
+                    )->List[Document]:
+        """
+        搜索知识库子类实自己逻辑
+        """
+        pass
+        
     @abstractmethod
     def do_add_doc(self,
                    docs: List[Document],
