@@ -370,7 +370,10 @@ class KnowledgeFile:
 
         if not docs:
             return []
-        #先给二级下 被分开的三级目录分块 增加二级标题，再给分开的二级目录增加一级标题，然后给整个文档的所有分块增加文档标题分块       
+        #先给三级下 被分开的四级目录分块 增加三级标题， 
+        #再给二级下 被分开的三级目录分块 增加二级标题，
+        #再给分开的二级目录增加一级标题，
+        #然后给整个文档的所有分块增加文档标题分块       
         if zh_title_enhance:
             docs = zh_third_title_enhance(docs)
             docs = zh_second_title_enhance(docs)
