@@ -50,8 +50,7 @@ class ESKBService(KBService):
             }
             self.es_client_python.indices.create(index=self.index_name, mappings=mappings)
         except BadRequestError as e:
-            logger.error("创建索引失败,重新")
-            logger.error(e)
+            logger.error("创建索引失败,重新" + e)
 
         try:
             # langchain ES 连接、创建索引

@@ -113,7 +113,9 @@ class FaissKBService(KBService):
             return "in_folder"
         else:
             return False
-
+        
+    def searchbyContent(self):
+        pass
 
 if __name__ == '__main__':
     faissService = FaissKBService("test")
