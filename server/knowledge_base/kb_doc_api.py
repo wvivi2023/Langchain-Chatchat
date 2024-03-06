@@ -86,14 +86,14 @@ def search_content(
         top_k: int = Body(2, description="匹配文档数"),
         )-> List[Document]:
     print("kb_doc_api search_content")
+    docs=[]
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is not None:
         if query:
             docs = kb.search_content(query, top_k)
             print(f"search_content, docs:{docs}")
             return docs
-    else:
-        return None
+    return docs
 
 def update_docs_by_id(
         knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
@@ -334,6 +334,7 @@ def update_docs(
                                                chunk_overlap=chunk_overlap,
                                                zh_title_enhance=zh_title_enhance):
         if status:
+            print(f"kb_doc_api update_docs 文件生成docs并向量化，filename:{file_name}")
             kb_name, file_name, new_docs = result
             kb_file = KnowledgeFile(filename=file_name,
                                     knowledge_base_name=knowledge_base_name)
@@ -346,6 +347,7 @@ def update_docs(
     # 将自定义的docs进行向量化
     for file_name, v in docs.items():
         try:
+            print(f"kb_doc_api update_docs 自定义的docs 向量化，filename:{file_name}")
             v = [x if isinstance(x, Document) else Document(**x) for x in v]
             kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb.update_doc(kb_file, docs=v, not_refresh_vs_cache=True)
@@ -358,6 +360,7 @@ def update_docs(
     if not not_refresh_vs_cache:
         kb.save_vector_store()
 
+    print(f"kb_doc_api update_docs before finishing, failed_files:{failed_files}")
     return BaseResponse(code=200, msg=f"更新文档完成", data={"failed_files": failed_files})
 
 

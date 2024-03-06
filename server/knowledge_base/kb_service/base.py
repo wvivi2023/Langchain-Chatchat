@@ -127,7 +127,9 @@ class KBService(ABC):
                 except Exception as e:
                     print(f"cannot convert absolute path ({source}) to relative path. error is : {e}")
             self.delete_doc(kb_file)
+            print(f"add_doc filepath:{kb_file.filepath}，将要执行do_add_doc")
             doc_infos = self.do_add_doc(docs, **kwargs)
+            print(f"add_doc filepath:{kb_file.filepath} 将要执行dd_file_to_db")
             status = add_file_to_db(kb_file,
                                     custom_docs=custom_docs,
                                     docs_count=len(docs),
@@ -140,6 +142,7 @@ class KBService(ABC):
         """
         从知识库删除文件
         """
+        print(f"delete_doc filepath:{kb_file.filepath}")
         self.do_delete_doc(kb_file, **kwargs)
         status = delete_file_from_db(kb_file)
         if delete_content and os.path.exists(kb_file.filepath):
@@ -160,6 +163,7 @@ class KBService(ABC):
         如果指定了docs，则使用自定义docs，并将数据库对应条目标为custom_docs=True
         """
         if os.path.exists(kb_file.filepath):
+            print(f"{kb_file.filename} exists")
             self.delete_doc(kb_file, **kwargs)
             return self.add_doc(kb_file, docs=docs, **kwargs)
 

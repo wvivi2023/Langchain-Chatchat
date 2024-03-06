@@ -50,7 +50,8 @@ class ESKBService(KBService):
             }
             self.es_client_python.indices.create(index=self.index_name, mappings=mappings)
         except BadRequestError as e:
-            logger.error("创建索引失败,重新" + e)
+            logger.error("创建索引失败,重新")
+            logger.error(e)
 
         try:
             # langchain ES 连接、创建索引
@@ -115,7 +116,20 @@ class ESKBService(KBService):
         # 将docs写入到ES中
         try:
             # 连接 + 同时写入文档
+            #使用self.db_init，modified by weiweiwang
             if self.user != "" and self.password != "":
+                # self.db_init.from_documents(
+                #         documents=docs,
+                #         embedding=embed_model,
+                #         es_url= f"http://{self.IP}:{self.PORT}",
+                #         index_name=self.index_name,
+                #         distance_strategy="COSINE",
+                #         query_field="context",
+                #         vector_query_field="dense_vector",
+                #         verify_certs=False,
+                #         es_user=self.user,
+                #         es_password=self.password
+                #     )
                 self.db = ElasticsearchStore.from_documents(
                         documents=docs,
                         embedding=embed_model,
@@ -199,8 +213,10 @@ class ESKBService(KBService):
             }
             print(f"***do_delete_doc: kb_file.filepath:{kb_file.filepath}, base_file_name:{base_file_name}")
             # 注意设置size，默认返回10个。
-            search_results = self.es_client_python.search(body=query, size=50)
+            search_results = self.es_client_python.search(index=self.index_name, body=query,size=200)
             delete_list = [hit["_id"] for hit in search_results['hits']['hits']]
+            size = len(delete_list)
+            print(f"***do_delete_doc: 删除的size:{size}, {delete_list}")
             if len(delete_list) == 0:
                 return None
             else:
@@ -234,10 +250,12 @@ class ESKBService(KBService):
                     }
                 }
             }
-            search_results = self.es_client_python.search(body=query)
+            search_results = self.es_client_python.search(index=self.index_name, body=query,size=200)
             if len(search_results["hits"]["hits"]) == 0:
                 raise ValueError("召回元素个数为0")
         info_docs = [{"id":hit["_id"], "metadata": hit["_source"]["metadata"]} for hit in search_results["hits"]["hits"]]
+        size = len(info_docs)
+        print(f"do_add_doc 召回元素个数：{size}")
         return info_docs
 
 
