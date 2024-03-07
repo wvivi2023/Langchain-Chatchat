@@ -119,6 +119,9 @@ class KBService(ABC):
         if docs:
             # 将 metadata["source"] 改为相对路径
             for doc in docs:
+                #增加时间，added by weiweiwang 2024.3.6
+                from datetime import datetime 
+                doc.metadata["updatetime"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 try:
                     source = doc.metadata.get("source", "")
                     if os.path.isabs(source):
@@ -188,7 +191,7 @@ class KBService(ABC):
     def search_content(self,
                     query: str,
                     top_k: int,
-                    )->List[Document]:
+                    )->List[DocumentWithVSId]:
         print("KBService search_content")
         docs = self.searchbyContent(query,top_k)
         return docs
@@ -282,7 +285,7 @@ class KBService(ABC):
     def searchbyContent(self,
                     query: str,
                     top_k: int,
-                    )->List[Document]:
+                    )->List[DocumentWithVSId]:
         """
         搜索知识库子类实自己逻辑
         """

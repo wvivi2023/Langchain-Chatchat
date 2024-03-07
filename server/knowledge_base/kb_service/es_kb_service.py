@@ -11,6 +11,7 @@ from server.utils import load_local_embeddings
 from elasticsearch import Elasticsearch,BadRequestError
 from configs import logger
 from configs import kbs_config
+from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 
 class ESKBService(KBService):
 
@@ -171,24 +172,29 @@ class ESKBService(KBService):
 
     def searchbyContent(self, query:str, top_k: int = 2):
         if self.es_client_python.indices.exists(index=self.index_name):
-            print(f"******ESKBService searchByContent {self.index_name}")
+            print(f"******ESKBService searchByContent {self.index_name},query:{query}")
             tem_query = {
                 "query": {"match": {
                         "context": "*" + query + "*"
-                    }}
+                    }},
+                "highlight":{"fields":{
+                        "context":{}
+                        }}
                 }
             search_results = self.es_client_python.search(index=self.index_name, body=tem_query, size=top_k)
             hits = [hit for hit in search_results["hits"]["hits"]]
-            docs_and_scores = [
-                (
-                    Document(
-                        page_content=hit["_source"]["context"],
-                        metadata=hit["_source"]["metadata"],
-                    )
-                )
-                for hit in hits
-            ]
 
+            docs_and_scores = []
+            for hit in hits:
+                highlighted_contexts = ""
+                if 'highlight' in hit:
+                    highlighted_contexts = " ".join(hit['highlight']['context'])
+                    #print(f"******searchByContent highlighted_contexts:{highlighted_contexts}")
+                docs_and_scores.append(DocumentWithVSId(
+                        page_content=highlighted_contexts,
+                        metadata=hit["_source"]["metadata"],
+                        id = hit["_id"],
+                    ))
             return docs_and_scores
         
     def del_doc_by_ids(self, ids: List[str]) -> bool:

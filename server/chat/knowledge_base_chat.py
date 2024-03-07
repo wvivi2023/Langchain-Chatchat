@@ -97,7 +97,6 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
                                             max_length=RERANKER_MAX_LENGTH,
                                             model_name_or_path=reranker_model_path
                                             )
-            print(docs)
             docs = reranker_model.compress_documents(documents=docs,
                                                      query=query)
             print("---------after rerank------------------")
