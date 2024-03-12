@@ -35,10 +35,10 @@ def get_second_level_title(
     splitlines = text.splitlines()
     first_line = splitlines[0]
     # 文本中有标点符号，就不是title
-    ENDS_IN_PUNCT_PATTERN = r"[^\w\s]\Z"
-    ENDS_IN_PUNCT_RE = re.compile(ENDS_IN_PUNCT_PATTERN)
-    if ENDS_IN_PUNCT_RE.search(first_line) is not None:
-       return ""
+    # ENDS_IN_PUNCT_PATTERN = r"[^\w\s]\Z"
+    # ENDS_IN_PUNCT_RE = re.compile(ENDS_IN_PUNCT_PATTERN)
+    # if ENDS_IN_PUNCT_RE.search(first_line) is not None:
+    #    return ""
 
     #3 ****
     #3.1 *****
@@ -105,10 +105,10 @@ def get_third_level_title(
     splitlines = text.splitlines()
     first_line = splitlines[0]
     # 文本中有标点符号，就不是title
-    ENDS_IN_PUNCT_PATTERN = r"[^\w\s]\Z"
-    ENDS_IN_PUNCT_RE = re.compile(ENDS_IN_PUNCT_PATTERN)
-    if ENDS_IN_PUNCT_RE.search(first_line) is not None:
-       return ""
+    # ENDS_IN_PUNCT_PATTERN = r"[^\w\s]\Z"
+    # ENDS_IN_PUNCT_RE = re.compile(ENDS_IN_PUNCT_PATTERN)
+    # if ENDS_IN_PUNCT_RE.search(first_line) is not None:
+    #    return ""
     
     #3 ****
     #3.1 *****
