@@ -197,6 +197,28 @@ class ESKBService(KBService):
                     ))
             return docs_and_scores
         
+    def searchbyContentInternal(self, query:str, top_k: int = 2):
+        if self.es_client_python.indices.exists(index=self.index_name):
+            print(f"******ESKBService searchbyContentInternal {self.index_name},query:{query}")
+            tem_query = {
+                "query": {"match": {
+                        "context": "*" + query + "*"
+                    }}
+                }
+            search_results = self.es_client_python.search(index=self.index_name, body=tem_query, size=top_k)
+            hits = [hit for hit in search_results["hits"]["hits"]]
+            docs_and_scores = [
+            (
+                Document(
+                    page_content=hit["_source"]["context"],
+                    metadata=hit["_source"]["metadata"],
+                ),
+                1.3,
+            )
+            for hit in hits
+            ]
+            return docs_and_scores
+        
     def del_doc_by_ids(self, ids: List[str]) -> bool:
         for doc_id in ids:
             try:

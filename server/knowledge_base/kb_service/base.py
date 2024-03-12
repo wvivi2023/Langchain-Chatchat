@@ -196,6 +196,13 @@ class KBService(ABC):
         docs = self.searchbyContent(query,top_k)
         return docs
     
+    def search_content_internal(self,
+                    query: str,
+                    top_k: int,
+                    )->List[Tuple[Document, float]]:
+        docs = self.searchbyContentInternal(query,top_k)
+        return docs
+    
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         return []
 
@@ -286,6 +293,16 @@ class KBService(ABC):
                     query: str,
                     top_k: int,
                     )->List[DocumentWithVSId]:
+        """
+        搜索知识库子类实自己逻辑
+        """
+        pass
+
+    @abstractmethod
+    def searchbyContentInternal(self,
+                    query: str,
+                    top_k: int,
+                    )->List[Tuple[Document, float]]:
         """
         搜索知识库子类实自己逻辑
         """

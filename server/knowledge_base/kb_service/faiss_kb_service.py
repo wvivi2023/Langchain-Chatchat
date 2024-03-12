@@ -117,6 +117,10 @@ class FaissKBService(KBService):
     def searchbyContent(self):
         pass
 
+    def searchbyContentInternal(self):
+        pass
+
+
 if __name__ == '__main__':
     faissService = FaissKBService("test")
     faissService.add_doc(KnowledgeFile("README.md", "test"))

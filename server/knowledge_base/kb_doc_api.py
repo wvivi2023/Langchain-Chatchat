@@ -21,8 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from configs import USE_RANKING
 import jieba
-
-
+from typing import List, Dict,Tuple
 
 def search_docs(
         query: str = Body("", description="用户输入", examples=["你好"]),
@@ -42,8 +41,12 @@ def search_docs(
         if query:
             print(f"search_docs, query:{query}")  
             docs = kb.search_docs(query, FIRST_VECTOR_SEARCH_TOP_K, score_threshold)
-            print(f"search_docs, docs:{docs}")
-
+            print(f"search_docs,len of docs {len(docs)}, docs:{docs}")
+            
+            docs_key = kb.search_content_internal(query,2)
+            print(f"search_content_internal, len of docs {len(docs)}, docs:{docs_key}")
+            docs = merge_and_deduplicate(docs, docs_key)
+            print(f"after merge_and_deduplicate, len of docs:{docs}")
             if USE_RANKING:
                 queryList = []
                 queryList.append(query)
@@ -80,6 +83,30 @@ def search_docs(
             data = kb.list_docs(file_name=file_name, metadata=metadata)
     return data
 
+
+def merge_and_deduplicate(list1: List[Tuple[Document, float]], list2: List[Tuple[Document, float]]) -> List[Tuple[Document, float]]:
+    # 使用字典来存储 page_content 和对应的元组 (Document, float)
+    merged_dict = {}
+    # 遍历第一个列表
+    for item in list1:
+        document, value = item
+        page_content = document.page_content
+        # 如果 page_content 不在字典中，将其加入字典
+        if page_content not in merged_dict:
+            merged_dict[page_content] = item
+    
+    # 遍历第二个列表
+    for item in list2:
+        document, value = item
+        page_content = document.page_content
+        # 如果 page_content 不在字典中，将其加入字典
+        if page_content not in merged_dict:
+            merged_dict[page_content] = item
+    
+    # 将字典的值转换为列表并返回
+    return list(merged_dict.values())
+
+    
 def search_content(
         query: str = Body("", description="用户输入", examples=["国网安徽信通准入手续"]),
         knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
