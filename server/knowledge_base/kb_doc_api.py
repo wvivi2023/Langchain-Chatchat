@@ -44,9 +44,9 @@ def search_docs(
             print(f"search_docs,len of docs {len(docs)}, docs:{docs}")
             
             docs_key = kb.search_content_internal(query,2)
-            print(f"search_content_internal, len of docs {len(docs)}, docs:{docs_key}")
+            print(f"search_content_internal, len of docs {len(docs_key)}, docs:{docs_key}")
             docs = merge_and_deduplicate(docs, docs_key)
-            print(f"after merge_and_deduplicate, len of docs:{docs}")
+            print(f"after merge_and_deduplicate, len of docs: {len(docs)}, docs:{docs}")
             if USE_RANKING:
                 queryList = []
                 queryList.append(query)
