@@ -155,23 +155,23 @@ def is_fourth_level_content(
 #给四级被分开的内容 增加三级标题
 def zh_third_title_enhance(docs: Document) -> Document:
     title = None
-    print(f"zh_third_title_enhance ....")
+    #print(f"zh_third_title_enhance ....")
     if len(docs) > 0:
         for doc in docs:
-            #print(f"zh_third_title_enhance: {doc}")
+            print(f"zh_third_title_enhance: {doc}")
             third_title = get_third_level_title(doc.page_content)
             if third_title:
                 title = third_title
-                #print(f"title: {title}")
+                print(f"title: {title}")
             elif title:
-                #print(f"title is not none")
+                print(f"title is not none")
                 temp_fourth_content = is_fourth_level_content(doc.page_content)
                 if temp_fourth_content:
                     #print(f"is_fourth_level_content : {temp_fourth_content}")
                     doc.page_content = f"{title} {doc.page_content}"
                 else:
                     title = None
-            #print(f"final title: {title}")
+            print(f"final title: {title}")
         return docs
     else:
         print("zh_third_title_enhance 文件不存在")
@@ -181,20 +181,20 @@ def zh_second_title_enhance(docs: Document) -> Document:
     title = None
     if len(docs) > 0:
         for doc in docs:
-            #print(f"zh_second_title_enhance: {doc}")
+            print(f"zh_second_title_enhance: {doc}")
             second_title = get_second_level_title(doc.page_content)
             if second_title:
                 title = second_title
-                #print(f"title: {title}")
+                print(f"title: {title}")
             elif title:
-                #print(f"title is not none")
+                print(f"title is not none")
                 temp_third_content = is_third_level_content(doc.page_content)
                 if temp_third_content:
-                    #print(f"is_third_level_content : {temp_third_content}")
+                    print(f"is_third_level_content : {temp_third_content}")
                     doc.page_content = f"{title} {doc.page_content}"
                 else:
                     title = None
-            #print(f"final title: {title}")
+            print(f"final title: {title}")
         return docs
     else:
         print("zh_second_title_enhance 文件不存在")
@@ -204,19 +204,19 @@ def zh_first_title_enhance(docs: Document) -> Document:
     title = None
     if len(docs) > 0:
         for doc in docs:
-            #print(f"zh_first_title_enhance: {doc}")
+            print(f"zh_first_title_enhance: {doc}")
             first_title = get_fist_level_title(doc.page_content)
             if first_title:
                 title = first_title
-                #print(f"title: {title}")
+                print(f"title: {title}")
             elif title:
                 temp_second_content = is_second_level_content(doc.page_content)
                 if temp_second_content:
-                    #print(f"is_second_level_content : {temp_second_content}")
+                    print(f"is_second_level_content : {temp_second_content}")
                     doc.page_content = f"{title} {doc.page_content}"
                 else:
                     title = None
-        #print(f"final title: {title}")
+        print(f"final title: {title}")
         return docs
     else:
         print("zh_first_title_enhance 文件不存在")
