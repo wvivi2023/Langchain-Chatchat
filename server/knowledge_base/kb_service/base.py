@@ -14,7 +14,7 @@ from server.db.repository.knowledge_base_repository import (
 from server.db.repository.knowledge_file_repository import (
     add_file_to_db, delete_file_from_db, delete_files_from_db, file_exists_in_db,
     count_files_from_db, list_files_from_db, get_file_detail, delete_file_from_db,
-    list_docs_from_db,
+    list_docs_from_db,delete_docs_from_db_by_ids,update_file_to_db
 )
 
 from configs import (kbs_config, VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD,
@@ -112,9 +112,11 @@ class KBService(ABC):
             custom_docs = True
             for doc in docs:
                 doc.metadata.setdefault("source", kb_file.filename)
+            print(f"kb_doc_api add_doc docs 不为空，len(docs)：{len(docs)}")
         else:
             docs = kb_file.file2text()
             custom_docs = False
+            print(f"kb_doc_api add_doc docs 为空，len(docs)：{len(docs)}")
 
         if docs:
             # 将 metadata["source"] 改为相对路径
@@ -165,10 +167,10 @@ class KBService(ABC):
         使用content中的文件更新向量库
         如果指定了docs，则使用自定义docs，并将数据库对应条目标为custom_docs=True
         """
-        if os.path.exists(kb_file.filepath):
-            print(f"{kb_file.filename} exists")
+        if os.path.exists(kb_file.filepath) and docs is None:
             self.delete_doc(kb_file, **kwargs)
-            return self.add_doc(kb_file, docs=docs, **kwargs)
+
+        return self.add_doc(kb_file, docs=docs, **kwargs)
 
     def exist_doc(self, file_name: str):
         return file_exists_in_db(KnowledgeFile(knowledge_base_name=self.kb_name,
@@ -209,6 +211,13 @@ class KBService(ABC):
     def del_doc_by_ids(self, ids: List[str]) -> bool:
         raise NotImplementedError
 
+    def del_doc_by_ids_from_db(self, knowledge_base_name: str , file_name:str, ids: List[str]) -> bool:
+        delete_docs_from_db_by_ids(ids)
+        update_file_to_db(knowledge_base_name = knowledge_base_name,file_name = file_name)
+        print(f"*******KBService del_doc_by_ids_from_db")
+        return True
+        
+
     def update_doc_by_ids(self, docs: Dict[str, Document]) -> bool:
         '''
         传入参数为： {doc_id: Document, ...}
@@ -230,16 +239,25 @@ class KBService(ABC):
         通过file_name或metadata检索Document
         '''
         doc_infos = list_docs_from_db(kb_name=self.kb_name, file_name=file_name, metadata=metadata)
+        print(f"kb_doc_api list_docs_from_db: {doc_infos}")
         docs = []
         for x in doc_infos:
-            doc_info = self.get_doc_by_ids([x["id"]])[0]
-            if doc_info is not None:
+            doc_info = self.get_doc_by_ids([x["id"]])
+            #print(f"kb_doc_api doc_info: {doc_info}")
+            #if doc_info is not None:
+            if doc_info is not None and isinstance(doc_info, list):
+                if doc_info:
                 # 处理非空的情况
-                doc_with_id = DocumentWithVSId(**doc_info.dict(), id=x["id"])
-                docs.append(doc_with_id)
+                #data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
+                    doc_with_id = DocumentWithVSId(**doc_info[0].dict(), id=x["id"])
+                    docs.append(doc_with_id)
+                else:
+                     # 处理 doc_info 为空列表的情况
+                    pass
             else:
-                # 处理空的情况
+                # 处理 doc_info 是 NoneType 或者不是列表的情况
                 # 可以选择跳过当前循环迭代或执行其他操作
+                print("base.py list_docs 返回为空")
                 pass
         return docs
 

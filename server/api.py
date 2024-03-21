@@ -144,7 +144,7 @@ def mount_knowledge_routes(app: FastAPI):
     from server.knowledge_base.kb_doc_api import (list_files, upload_docs, delete_docs,
                                                 update_docs, download_doc, recreate_vector_store,
                                                 search_docs, DocumentWithVSId, update_info,
-                                                update_docs_by_id,search_content)
+                                                update_docs_by_id,search_content,delete_docs_by_ids)
 
     app.post("/chat/knowledge_base_chat",
              tags=["Chat"],
@@ -202,6 +202,12 @@ def mount_knowledge_routes(app: FastAPI):
              )(update_docs_by_id)
 
 
+    app.post("/knowledge_base/delete_docs_by_ids",
+             tags=["Knowledge Base Management"],
+             response_model=BaseResponse,
+             summary="根据ids删除知识库文档"
+             )(delete_docs_by_ids)
+    
     app.post("/knowledge_base/upload_docs",
              tags=["Knowledge Base Management"],
              response_model=BaseResponse,

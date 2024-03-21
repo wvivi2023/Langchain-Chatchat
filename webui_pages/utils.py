@@ -596,6 +596,26 @@ class ApiRequest:
         )
         return self._get_response_value(response)
 
+    def delete_docs_by_ids(
+            self,
+            knowledge_base_name: str,
+            file_name:str,
+            ids: list[str],
+    ) -> bool:
+        '''
+        对应api.py/knowledge_base/delete_doc_by_ids接口
+        '''
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "file_name":file_name,
+            "ids": ids,
+        }
+        response = self.post(
+            "/knowledge_base/delete_docs_by_ids",
+            json=data
+        )
+        return self._get_response_value(response)
+    
     def upload_kb_docs(
             self,
             files: List[Union[str, Path, bytes]],

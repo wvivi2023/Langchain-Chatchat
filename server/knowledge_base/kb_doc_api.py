@@ -137,7 +137,23 @@ def update_docs_by_id(
     else:
         return BaseResponse(msg=f"文档更新失败")
 
-
+def delete_docs_by_ids(knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
+                    file_name:str =  Body(..., description="文件名"),
+                   ids: List[str] = Body(..., description="要更新的文档内容，形如：{id1,id2....}")
+    ) -> BaseResponse:
+    '''
+    按照文档 ID 删除文档内容
+    '''
+    kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
+    if kb is None:
+        return BaseResponse(code=500, msg=f"指定的知识库 {knowledge_base_name} 不存在")
+    result1 = kb.del_doc_by_ids(ids)
+    result2 = kb.del_doc_by_ids_from_db(knowledge_base_name,file_name,ids)
+    if result1 and result2:
+        return BaseResponse(msg=f"文档删除成功")
+    else:
+        return BaseResponse(msg=f"文档删除失败")
+    
 def list_files(
         knowledge_base_name: str
 ) -> ListResponse:
@@ -339,6 +355,7 @@ def update_docs(
     failed_files = {}
     kb_files = []
 
+    print(f"111111 kb_doc_api update_docs file_name:{file_names},更新的doc 长度：{len(docs)}")
     # 生成需要加载docs的文件列表
     for file_name in file_names:
         file_detail = get_file_detail(kb_name=knowledge_base_name, filename=file_name)
@@ -346,33 +363,38 @@ def update_docs(
         if file_detail.get("custom_docs") and not override_custom_docs:
             continue
         if file_name not in docs:
+            print(f"****kb_doc_api update_docs file_name not in docs")
             try:
                 kb_files.append(KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name))
+
+                # 从文件生成docs，并进行向量化。
+                # 这里利用了KnowledgeFile的缓存功能，在多线程中加载Document，然后传给KnowledgeFile
+                for status, result in files2docs_in_thread(kb_files,
+                                                           chunk_size=chunk_size,
+                                                           chunk_overlap=chunk_overlap,
+                                                           zh_title_enhance=zh_title_enhance):
+                    if status:
+                        print(f"kb_doc_api update_docs 文件生成docs并向量化，filename:{file_name}")
+                        kb_name, file_name, new_docs = result
+                        kb_file = KnowledgeFile(filename=file_name,
+                                                knowledge_base_name=knowledge_base_name)
+                        kb_file.splited_docs = new_docs
+                        kb.update_doc(kb_file, not_refresh_vs_cache=True)
+                    else:
+                        kb_name, file_name, error = result
+                        failed_files[file_name] = error
+                
             except Exception as e:
                 msg = f"加载文档 {file_name} 时出错：{e}"
                 logger.error(f'{e.__class__.__name__}: {msg}',
                              exc_info=e if log_verbose else None)
                 failed_files[file_name] = msg
-
-    # 从文件生成docs，并进行向量化。
-    # 这里利用了KnowledgeFile的缓存功能，在多线程中加载Document，然后传给KnowledgeFile
-    for status, result in files2docs_in_thread(kb_files,
-                                               chunk_size=chunk_size,
-                                               chunk_overlap=chunk_overlap,
-                                               zh_title_enhance=zh_title_enhance):
-        if status:
-            print(f"kb_doc_api update_docs 文件生成docs并向量化，filename:{file_name}")
-            kb_name, file_name, new_docs = result
-            kb_file = KnowledgeFile(filename=file_name,
-                                    knowledge_base_name=knowledge_base_name)
-            kb_file.splited_docs = new_docs
-            kb.update_doc(kb_file, not_refresh_vs_cache=True)
         else:
-            kb_name, file_name, error = result
-            failed_files[file_name] = error
+            print(f"****kb_doc_api update_docs file_name in docs")
 
     # 将自定义的docs进行向量化
     for file_name, v in docs.items():
+        print(f"222222 kb_doc_api update_docs file_name:{file_name},更新的doc 长度：{len(docs)}")
         try:
             print(f"kb_doc_api update_docs 自定义的docs 向量化，filename:{file_name}")
             v = [x if isinstance(x, Document) else Document(**x) for x in v]

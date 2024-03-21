@@ -41,7 +41,46 @@ def delete_docs_from_db(session,
     session.commit()
     return docs
 
+@with_session
+def delete_docs_from_db_by_ids(session,
+                               ids:List[str]
+):
+    for id in ids:
+        query = session.query(FileDocModel).filter(FileDocModel.doc_id.ilike(id))
+        query.delete(synchronize_session=False)
+        session.commit()
+    
+    return True
 
+@with_session
+def count_docs_from_db(session, kb_name: str,file_name:str) -> int:
+    docs = list_docs_from_db(kb_name=kb_name, file_name=file_name)
+    return len(docs)
+    #return session.query(FileDocModel).filter(KnowledgeFileModel.kb_name.ilike(kb_name)).count()
+
+@with_session
+def update_file_to_db(session,
+                knowledge_base_name: str,
+                file_name:str):
+    kb = session.query(KnowledgeBaseModel).filter_by(kb_name=knowledge_base_name).first()
+    if kb:
+        # 如果已经存在该文件，则更新文件信息与版本号
+        existing_file: KnowledgeFileModel = (session.query(KnowledgeFileModel)
+                                             .filter(KnowledgeFileModel.kb_name.ilike(knowledge_base_name),
+                                                     KnowledgeFileModel.file_name.ilike(file_name))
+                                            .first())
+
+
+        if existing_file:
+            existing_file.file_version += 1
+            count = count_docs_from_db(knowledge_base_name, file_name)
+            print(f"*****update_file_to_db 后count 是{count}")
+            existing_file.docs_count= count
+            print(f"******knowledge_file_repository 更新knowledge_file***existing_file name :{existing_file.file_name}")
+    else:
+        print(f"无效的kb")
+    
+    
 @with_session
 def add_docs_to_db(session,
                    kb_name: str,
@@ -101,6 +140,7 @@ def add_file_to_db(session,
             existing_file.docs_count = docs_count
             existing_file.custom_docs = custom_docs
             existing_file.file_version += 1
+            print(f"******knowledge_file_repository 更新knowledge_file***existing_file name :{existing_file.file_name}")
         # 否则，添加新文件
         else:
             new_file = KnowledgeFileModel(

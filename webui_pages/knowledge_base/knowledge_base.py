@@ -51,6 +51,10 @@ def file_exists(kb: str, selected_rows: List) -> Tuple[str, str]:
             return file_name, file_path
     return "", ""
 
+def get_limited_string(data, max_length):
+    value = data.get('your_column_name', '')
+    return value[:max_length] if len(value) > max_length else value
+
 
 def knowledge_base_page(api: ApiRequest, is_lite: bool = None):
     try:
@@ -315,53 +319,72 @@ def knowledge_base_page(api: ApiRequest, is_lite: bool = None):
             time.sleep(1)
             st.rerun()
 
-        # with st.sidebar:
-        #     keyword = st.text_input("查询关键字")
-        #     top_k = st.slider("匹配条数", 1, 100, 3)
+        with st.sidebar:
+            keyword = st.text_input("查询关键字")
+            top_k = st.slider("匹配条数", 1, 100, 3)
 
-        # st.write("文件内文档列表。双击进行修改，在删除列填入 Y 可删除对应行。")
-        # docs = []
-        # df = pd.DataFrame([], columns=["seq", "id", "content", "source"])
-        # if selected_rows:
-        #     file_name = selected_rows[0]["file_name"]
-        #     docs = api.search_kb_docs(knowledge_base_name=selected_kb, file_name=file_name)
-        #     data = [
-        #         {"seq": i + 1, "id": x["id"], "page_content": x["page_content"], "source": x["metadata"].get("source"),
-        #          "type": x["type"],
-        #          "metadata": json.dumps(x["metadata"], ensure_ascii=False),
-        #          "to_del": "",
-        #          } for i, x in enumerate(docs)]
-        #     df = pd.DataFrame(data)
+        st.write("文件内文档列表。双击进行修改，在删除列填入 Y 可删除对应行。")
+        docs = []
+        df = pd.DataFrame([], columns=["seq", "id", "content", "source"])
+        if selected_rows:
+            file_name = selected_rows[0]["file_name"]
+            print(f"选中的file_name:{file_name},kb:{selected_kb}")
+            docs = api.search_kb_docs(knowledge_base_name=selected_kb, file_name=file_name)
+            print(f"选中的file_name：api.search_kb_docs：{docs}")
+            if isinstance(docs, list):
+                data = [
+                    {"seq": i + 1, "id": x["id"], "page_content": x["page_content"], "source": x["metadata"].get("source"),
+                    "type": x["type"],
+                    "metadata": json.dumps(x["metadata"], ensure_ascii=False),
+                    "to_del": "",
+                    } for i, x in enumerate(docs)]
+                df = pd.DataFrame(data)
 
-        # #     gb = GridOptionsBuilder.from_dataframe(df)
-        # #     gb.configure_columns(["id", "source", "type", "metadata"], hide=True)
-        # #     gb.configure_column("seq", "No.", width=50)
-        # #     gb.configure_column("page_content", "内容", editable=True, autoHeight=True, wrapText=True, flex=1,
-        # #                         cellEditor="agLargeTextCellEditor", cellEditorPopup=True)
-        # #     gb.configure_column("to_del", "删除", editable=True, width=50, wrapHeaderText=True,
-        # #                         cellEditor="agCheckboxCellEditor", cellRender="agCheckboxCellRenderer")
-        # #     gb.configure_selection()
-        # #     edit_docs = AgGrid(df, gb.build())
+                gb = GridOptionsBuilder.from_dataframe(df)
+                gb.configure_columns(["id", "source", "type", "metadata"], hide=True)
+                gb.configure_column("seq", "No.", width=50)
+                gb.configure_column("page_content", "内容", editable=True, autoHeight=True, wrapText=True, flex=1,
+                                    cellEditor="agLargeTextCellEditor", cellEditorPopup=True, autoWidth=True,cellEditorParams= { "maxLength": 1000})
+                gb.configure_column("to_del", "删除", editable=True, width=50, wrapHeaderText=True,
+                                    cellEditor="agCheckboxCellEditor", cellRender="agCheckboxCellRenderer")
+                gb.configure_selection()
+                edit_docs = AgGrid(df, gb.build())
 
-        #     if st.button("保存更改"):
-        #         origin_docs = {
-        #             x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in
-        #             docs}
-        #         changed_docs = []
-        #         for index, row in edit_docs.data.iterrows():
-        #             origin_doc = origin_docs[row["id"]]
-        #             if row["page_content"] != origin_doc["page_content"]:
-        #                 if row["to_del"] not in ["Y", "y", 1]:
-        #                     changed_docs.append({
-        #                         "page_content": row["page_content"],
-        #                         "type": row["type"],
-        #                         "metadata": json.loads(row["metadata"]),
-        #                     })
+                if st.button("保存更改"):
+                    origin_docs = {
+                        x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in
+                        docs}
+                    changed_docs = []
+                    delete_docs_ids = []
+                    for index, row in edit_docs.data.iterrows():
+                        id_string = row["id"]
+                        print(f"""edit_docs: index:{index},row[id]:{id_string}""")
+                        origin_doc = origin_docs[row["id"]]
+                        #if row["page_content"] != origin_doc["page_content"]:
+                        if row["to_del"] not in ["Y", "y", 1]:
+                            changed_docs.append({
+                                "page_content": row["page_content"],
+                                "type": row["type"],
+                                "metadata": json.loads(row["metadata"]),
+                            })
+                        elif row["to_del"] in ["Y", "y", 1]:
+                                delete_docs_ids.append(id_string)
+                                print(f"""删除的文档id：,row[id]:{id_string}, 文档内容：{row["page_content"]}""")
 
-        #         if changed_docs:
-        #             if api.update_kb_docs(knowledge_base_name=selected_kb,
-        #                                   file_names=[file_name],
-        #                                   docs={file_name: changed_docs}):
-        #                 st.toast("更新文档成功")
-        #             else:
-        #                 st.toast("更新文档失败")
+                    if changed_docs:
+                        print(f"更新的文档有 长度：{len(changed_docs)}")
+                        if api.update_kb_docs(knowledge_base_name=selected_kb,
+                                            file_names=[file_name],
+                                            docs={file_name: changed_docs}):
+                            print("更新文档成功")
+                            st.toast("更新文档成功")
+                        else:
+                            print("更新文档失败")
+                            st.toast("更新文档失败")
+                    if delete_docs_ids:
+                        if api.delete_docs_by_ids(knowledge_base_name=selected_kb,file_name = file_name, ids= delete_docs_ids):
+                            print("删除文档成功")
+                            st.toast("删除文档成功")
+                        else:
+                            print("删除文档失败")
+                            st.toast("删除文档失败")

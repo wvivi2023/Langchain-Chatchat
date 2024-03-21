@@ -218,8 +218,25 @@ class ESKBService(KBService):
             for hit in hits
             ]
             return docs_and_scores
-        
-    def del_doc_by_ids(self, ids: List[str]) -> bool:
+
+    def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
+        result_list = []
+        for doc_id in ids:
+            try:
+                result = self.es_client_python.get(index=self.index_name,
+                                            id=doc_id)
+                #print(f"es_kb_service:result:{result}")
+                result_list.append(Document(
+                    page_content=result["_source"]["context"],
+                    metadata=result["_source"]["metadata"],
+                ))
+            except Exception as e:
+                logger.error(f"ES Docs Get Error! {e}")
+        return result_list
+                    
+      
+    def del_doc_by_ids(self,ids: List[str]) -> bool:
+        print(f"es_kb_service del_doc_by_ids")
         for doc_id in ids:
             try:
                 self.es_client_python.delete(index=self.index_name,
@@ -227,6 +244,7 @@ class ESKBService(KBService):
                                             refresh=True)
             except Exception as e:
                 logger.error(f"ES Docs Delete Error! {e}")
+
 
     def do_delete_doc(self, kb_file, **kwargs):
         base_file_name = os.path.basename(kb_file.filepath)

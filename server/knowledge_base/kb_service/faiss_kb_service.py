@@ -36,9 +36,10 @@ class FaissKBService(KBService):
         with self.load_vector_store().acquire() as vs:
             return [vs.docstore._dict.get(id) for id in ids]
 
-    def del_doc_by_ids(self, ids: List[str]) -> bool:
+    def del_doc_by_ids(self, ids: List[str]) -> bool: 
         with self.load_vector_store().acquire() as vs:
             vs.delete(ids)
+
 
     def do_init(self):
         self.vector_name = self.vector_name or self.embed_model
