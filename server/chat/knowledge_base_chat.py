@@ -10,7 +10,8 @@ from configs import (LLM_MODELS,
                      USE_RERANKER,
                      RERANKER_MODEL,
                      RERANKER_MAX_LENGTH,
-                     MODEL_PATH)
+                     MODEL_PATH,
+                     DOWNLOAD_BASE_URL)
 from server.utils import wrap_done, get_ChatOpenAI
 from server.utils import BaseResponse, get_prompt_template
 from langchain.chains import LLMChain
@@ -124,8 +125,11 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         for inum, doc in enumerate(docs):
             filename = doc.metadata.get("source")
             parameters = urlencode({"knowledge_base_name": knowledge_base_name, "file_name": filename})
-            base_url = request.base_url
-            url = f"{base_url}knowledge_base/download_doc?" + parameters
+            #base_url = request.base_url
+            #base_url = "http://10.138.20.199:17861/"
+            base_url = DOWNLOAD_BASE_URL
+            print(f"base_url:{base_url}")
+            url = f"{base_url}/knowledge_base/download_doc?" + parameters
             text = f"""出处 [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
             source_documents.append(text)
 
