@@ -19,7 +19,7 @@ from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from typing import List, Dict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from configs import USE_RANKING
+from configs import USE_RANKING, appLogger
 import jieba
 from typing import List, Dict,Tuple
 
@@ -41,12 +41,12 @@ def search_docs(
         if query:
             print(f"search_docs, query:{query}")  
             docs = kb.search_docs(query, FIRST_VECTOR_SEARCH_TOP_K, score_threshold)
-            print(f"search_docs,len of docs {len(docs)}, docs:{docs}")
+            #print(f"search_docs,len of docs {len(docs)}, docs:{docs}")
             
             docs_key = kb.search_content_internal(query,2)
-            print(f"search_content_internal, len of docs {len(docs_key)}, docs:{docs_key}")
+            #print(f"search_content_internal, len of docs {len(docs_key)}, docs:{docs_key}")
             docs = merge_and_deduplicate(docs, docs_key)
-            print(f"after merge_and_deduplicate, len of docs: {len(docs)}, docs:{docs}")
+            #print(f"after merge_and_deduplicate, len of docs: {len(docs)}, docs:{docs}")
             if USE_RANKING:
                 queryList = []
                 queryList.append(query)
@@ -57,16 +57,16 @@ def search_docs(
                 
                 vectorizer = TfidfVectorizer()
                 tfidf_matrix = vectorizer.fit_transform(doc_contents)
-                print(f"****** search_docs, tfidf_matrix:{tfidf_matrix}")
+                #print(f"****** search_docs, tfidf_matrix:{tfidf_matrix}")
                 query_vector = vectorizer.transform(queryList)
-                print(f"****** search_docs, query_vector:{query_vector}")
+                #print(f"****** search_docs, query_vector:{query_vector}")
                 cosine_similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
-                print(f"****** search_docs, cosine_similarities:{cosine_similarities}")
+                #print(f"****** search_docs, cosine_similarities:{cosine_similarities}")
 
                 # 将相似度分数与文档结合
                 docs_with_scores = [(doc, score) for doc, score in zip(docs, cosine_similarities)]
                 sorted_docs = sorted(docs_with_scores, key=lambda x: x[1], reverse=True)
-                print(f"****** search_docs, sorted_docs:{sorted_docs}")
+                #print(f"****** search_docs, sorted_docs:{sorted_docs}")
                 i = 0
                 for doc in sorted_docs:
                     if i>=top_k:
@@ -74,7 +74,7 @@ def search_docs(
                     else:
                         data.append(DocumentWithVSId(page_content = doc[0][0].page_content,id=doc[0][0].metadata.get("id"), score=doc[0][1],metadata=doc[0][0].metadata))
                         i = i+1
-                print(f"****** search_docs top K , sorted_docs:{data}")
+                #print(f"****** search_docs top K , sorted_docs:{data}")
             else:
                 data = [DocumentWithVSId(**x[0].dict(), score=x[1], id=x[0].metadata.get("id")) for x in docs]
 
@@ -355,7 +355,7 @@ def update_docs(
     failed_files = {}
     kb_files = []
 
-    print(f"111111 kb_doc_api update_docs file_name:{file_names},更新的doc 长度：{len(docs)}")
+    appLogger.info(f"111111 kb_doc_api update_docs file_names:{file_names},更新的doc 长度：{len(docs)}")
     # 生成需要加载docs的文件列表
     for file_name in file_names:
         file_detail = get_file_detail(kb_name=knowledge_base_name, filename=file_name)
@@ -363,40 +363,35 @@ def update_docs(
         if file_detail.get("custom_docs") and not override_custom_docs:
             continue
         if file_name not in docs:
-            print(f"****kb_doc_api update_docs file_name not in docs")
             try:
+                appLogger.info(f"****kb_doc_api update_docs file_name not in docs,filename:{file_name}")
                 kb_files.append(KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name))
-
-                # 从文件生成docs，并进行向量化。
-                # 这里利用了KnowledgeFile的缓存功能，在多线程中加载Document，然后传给KnowledgeFile
-                for status, result in files2docs_in_thread(kb_files,
-                                                           chunk_size=chunk_size,
-                                                           chunk_overlap=chunk_overlap,
-                                                           zh_title_enhance=zh_title_enhance):
-                    if status:
-                        print(f"kb_doc_api update_docs 文件生成docs并向量化，filename:{file_name}")
-                        kb_name, file_name, new_docs = result
-                        kb_file = KnowledgeFile(filename=file_name,
-                                                knowledge_base_name=knowledge_base_name)
-                        kb_file.splited_docs = new_docs
-                        kb.update_doc(kb_file, not_refresh_vs_cache=True)
-                    else:
-                        kb_name, file_name, error = result
-                        failed_files[file_name] = error
-                
             except Exception as e:
                 msg = f"加载文档 {file_name} 时出错：{e}"
                 logger.error(f'{e.__class__.__name__}: {msg}',
                              exc_info=e if log_verbose else None)
                 failed_files[file_name] = msg
+
+    # 从文件生成docs，并进行向量化。
+    # 这里利用了KnowledgeFile的缓存功能，在多线程中加载Document，然后传给KnowledgeFile
+    for status, result in files2docs_in_thread(kb_files,
+                                               chunk_size=chunk_size,
+                                               chunk_overlap=chunk_overlap,
+                                               zh_title_enhance=zh_title_enhance):
+        if status:
+            kb_name, file_name, new_docs = result
+            kb_file = KnowledgeFile(filename=file_name,
+                                    knowledge_base_name=knowledge_base_name)
+            kb_file.splited_docs = new_docs
+            kb.update_doc(kb_file, not_refresh_vs_cache=True)
         else:
-            print(f"****kb_doc_api update_docs file_name in docs")
+            kb_name, file_name, error = result
+            failed_files[file_name] = error
 
     # 将自定义的docs进行向量化
     for file_name, v in docs.items():
-        print(f"222222 kb_doc_api update_docs file_name:{file_name},更新的doc 长度：{len(docs)}")
         try:
-            print(f"kb_doc_api update_docs 自定义的docs 向量化，filename:{file_name}")
+            appLogger.info(f"222222 kb_doc_api update_docs file_name:{file_name},更新的doc 长度：{len(docs)}")
             v = [x if isinstance(x, Document) else Document(**x) for x in v]
             kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb.update_doc(kb_file, docs=v, not_refresh_vs_cache=True)
@@ -409,9 +404,7 @@ def update_docs(
     if not not_refresh_vs_cache:
         kb.save_vector_store()
 
-    print(f"kb_doc_api update_docs before finishing, failed_files:{failed_files}")
     return BaseResponse(code=200, msg=f"更新文档完成", data={"failed_files": failed_files})
-
 
 def download_doc(
         knowledge_base_name: str = Query(..., description="知识库名称", examples=["samples"]),

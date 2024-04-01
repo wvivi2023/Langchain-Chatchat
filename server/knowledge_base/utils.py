@@ -5,6 +5,7 @@ from configs import (
     OVERLAP_SIZE,
     ZH_TITLE_ENHANCE,
     logger,
+    appLogger,
     log_verbose,
     text_splitter_dict,
     LLM_MODELS,
@@ -94,7 +95,7 @@ def list_files_from_folder(kb_name: str):
                 process_entry(entry)
 
     except Exception as e:
-        logger.error(f"Error 发生 : {e}")
+        appLogger.error(f"Error 发生 : {e}")
     
     return result
 
@@ -175,7 +176,7 @@ def get_loader(loader_name: str, file_path: str, loader_kwargs: Dict = None):
         DocumentLoader = getattr(document_loaders_module, loader_name)
     except Exception as e:
         msg = f"为文件{file_path}查找加载器{loader_name}时出错：{e}"
-        logger.error(f'{e.__class__.__name__}: {msg}',
+        appLogger.error(f'{e.__class__.__name__}: {msg}',
                      exc_info=e if log_verbose else None)
         document_loaders_module = importlib.import_module('langchain.document_loaders')
         DocumentLoader = getattr(document_loaders_module, "UnstructuredFileLoader")
@@ -314,7 +315,7 @@ class KnowledgeFile:
 
     def file2docs(self, refresh: bool = False):
         if self.docs is None or refresh:
-            logger.info(f"{self.document_loader_name} used for {self.filepath}")
+            appLogger.info(f"{self.document_loader_name} used for {self.filepath}")
             loader = get_loader(loader_name=self.document_loader_name,
                                 file_path=self.filepath,
                                 loader_kwargs=self.loader_kwargs)
@@ -439,7 +440,7 @@ def files2docs_in_thread(
             return True, (file.kb_name, file.filename, file.file2text(**kwargs))
         except Exception as e:
             msg = f"从文件 {file.kb_name}/{file.filename} 加载文档时出错：{e}"
-            logger.error(f'{e.__class__.__name__}: {msg}',
+            appLogger.error(f'{e.__class__.__name__}: {msg}',
                          exc_info=e if log_verbose else None)
             return False, (file.kb_name, file.filename, msg)
 

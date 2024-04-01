@@ -9,7 +9,7 @@ from server.knowledge_base.kb_service.base import KBService, SupportedVSType
 from server.knowledge_base.utils import KnowledgeFile
 from server.utils import load_local_embeddings
 from elasticsearch import Elasticsearch,BadRequestError
-from configs import logger
+from configs import logger,appLogger
 from configs import kbs_config
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 
@@ -30,13 +30,13 @@ class ESKBService(KBService):
                 self.es_client_python =  Elasticsearch(f"http://{self.IP}:{self.PORT}",
                 basic_auth=(self.user,self.password))
             else:
-                logger.warning("ES未配置用户名和密码")
+                appLogger.warning("ES未配置用户名和密码")
                 self.es_client_python = Elasticsearch(f"http://{self.IP}:{self.PORT}")
         except ConnectionError:
-            logger.error("连接到 Elasticsearch 失败！")
+            appLogger.error("连接到 Elasticsearch 失败！")
             raise ConnectionError
         except Exception as e:
-            logger.error(f"Error 发生 : {e}")
+            appLogger.error(f"Error 发生 : {e}")
             raise e
         try:
             # 首先尝试通过es_client_python创建
@@ -51,8 +51,8 @@ class ESKBService(KBService):
             }
             self.es_client_python.indices.create(index=self.index_name, mappings=mappings)
         except BadRequestError as e:
-            logger.error("创建索引失败,重新")
-            logger.error(e)
+            appLogger.error("创建索引失败,重新")
+            appLogger.error(e)
 
         try:
             # langchain ES 连接、创建索引
@@ -67,7 +67,7 @@ class ESKBService(KBService):
                 es_password=self.password
             )
             else:
-                logger.warning("ES未配置用户名和密码")
+                appLogger.warning("ES未配置用户名和密码")
                 self.db_init = ElasticsearchStore(
                     es_url=f"http://{self.IP}:{self.PORT}",
                     index_name=self.index_name,
@@ -77,10 +77,10 @@ class ESKBService(KBService):
                 )
         except ConnectionError:
             print("### 初始化 Elasticsearch 失败！")
-            logger.error("### 初始化 Elasticsearch 失败！")
+            appLogger.error("### 初始化 Elasticsearch 失败！")
             raise ConnectionError
         except Exception as e:
-            logger.error(f"Error 发生 : {e}")
+            appLogger.error(f"Error 发生 : {e}")
             raise e
         try:
             # 尝试通过db_init创建索引
@@ -89,8 +89,8 @@ class ESKBService(KBService):
                                                      dims_length=self.dims_length
                                                      )
         except Exception as e:
-            logger.error("创建索引失败...")
-            logger.error(e)
+            appLogger.error("创建索引失败...")
+            appLogger.error(e)
             # raise e
 
 
@@ -156,9 +156,9 @@ class ESKBService(KBService):
         except ConnectionError as ce:
             print(ce)
             print("连接到 Elasticsearch 失败！")
-            logger.error("连接到 Elasticsearch 失败！")
+            appLogger.error("连接到 Elasticsearch 失败！")
         except Exception as e:
-            logger.error(f"Error 发生 : {e}")
+            appLogger.error(f"Error 发生 : {e}")
             print(e)
 
 
@@ -172,7 +172,7 @@ class ESKBService(KBService):
 
     def searchbyContent(self, query:str, top_k: int = 2):
         if self.es_client_python.indices.exists(index=self.index_name):
-            print(f"******ESKBService searchByContent {self.index_name},query:{query}")
+            appLogger.info(f"******ESKBService searchByContent {self.index_name},query:{query}")
             tem_query = {
                 "query": {"match": {
                         "context": "*" + query + "*"
@@ -199,7 +199,7 @@ class ESKBService(KBService):
         
     def searchbyContentInternal(self, query:str, top_k: int = 2):
         if self.es_client_python.indices.exists(index=self.index_name):
-            print(f"******ESKBService searchbyContentInternal {self.index_name},query:{query}")
+            appLogger.info(f"******ESKBService searchbyContentInternal {self.index_name},query:{query}")
             tem_query = {
                 "query": {"match": {
                         "context": "*" + query + "*"
@@ -231,19 +231,19 @@ class ESKBService(KBService):
                     metadata=result["_source"]["metadata"],
                 ))
             except Exception as e:
-                logger.error(f"ES Docs Get Error! {e}")
+                appLogger.error(f"ES Docs Get Error! {e}")
         return result_list
                     
       
     def del_doc_by_ids(self,ids: List[str]) -> bool:
-        print(f"es_kb_service del_doc_by_ids")
+        appLogger.info(f"es_kb_service del_doc_by_ids")
         for doc_id in ids:
             try:
                 self.es_client_python.delete(index=self.index_name,
                                             id=doc_id,
                                             refresh=True)
             except Exception as e:
-                logger.error(f"ES Docs Delete Error! {e}")
+                appLogger.error(f"ES Docs Delete Error! {e}")
 
 
     def do_delete_doc(self, kb_file, **kwargs):
@@ -262,7 +262,7 @@ class ESKBService(KBService):
             search_results = self.es_client_python.search(index=self.index_name, body=query,size=200)
             delete_list = [hit["_id"] for hit in search_results['hits']['hits']]
             size = len(delete_list)
-            print(f"***do_delete_doc: 删除的size:{size}, {delete_list}")
+            #print(f"***do_delete_doc: 删除的size:{size}, {delete_list}")
             if len(delete_list) == 0:
                 return None
             else:
@@ -272,7 +272,7 @@ class ESKBService(KBService):
                                                      id=doc_id,
                                                      refresh=True)
                     except Exception as e:
-                        logger.error(f"ES Docs Delete Error! {e}")
+                        appLogger.error(f"ES Docs Delete Error! {e}")
 
             # self.db_init.delete(ids=delete_list)
             #self.es_client_python.indices.refresh(index=self.index_name)
@@ -300,8 +300,8 @@ class ESKBService(KBService):
             if len(search_results["hits"]["hits"]) == 0:
                 raise ValueError("召回元素个数为0")
         info_docs = [{"id":hit["_id"], "metadata": hit["_source"]["metadata"]} for hit in search_results["hits"]["hits"]]
-        size = len(info_docs)
-        print(f"do_add_doc 召回元素个数：{size}")
+        #size = len(info_docs)
+        #print(f"do_add_doc 召回元素个数：{size}")
         return info_docs
 
 

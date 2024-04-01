@@ -28,6 +28,8 @@ from typing import List, Union, Dict, Optional, Tuple
 
 from server.embeddings_api import embed_texts, aembed_texts, embed_documents
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
+from configs import logger,appLogger
+import time
 
 
 def normalize(embeddings: List[List[float]]) -> np.ndarray:
@@ -108,16 +110,22 @@ class KBService(ABC):
         向知识库添加文件
         如果指定了docs，则不再将文本向量化，并将数据库对应条目标为custom_docs=True
         """
+        start_time = time.time()  # 记录开始时间
         if docs:
             custom_docs = True
             for doc in docs:
                 doc.metadata.setdefault("source", kb_file.filename)
-            print(f"kb_doc_api add_doc docs 不为空，len(docs)：{len(docs)}")
+            appLogger.info(f"kb_doc_api add_doc docs 不为空，len(docs)：{len(docs)},文件名称：{kb_file.filename}")
         else:
             docs = kb_file.file2text()
             custom_docs = False
-            print(f"kb_doc_api add_doc docs 为空，len(docs)：{len(docs)}")
+            appLogger.info(f"kb_doc_api add_doc docs 为空，len(docs)：{len(docs)},文件名称：{kb_file.filename}")
 
+        end_time = time.time()  # 记录结束时间
+        execution_time = end_time - start_time  # 计算执行时间
+        appLogger.info(f"add_doc: 加载文件或分块耗时{execution_time}秒")
+
+        start_time = time.time()  # 记录开始时间
         if docs:
             # 将 metadata["source"] 改为相对路径
             for doc in docs:
@@ -130,15 +138,19 @@ class KBService(ABC):
                         rel_path = Path(source).relative_to(self.doc_path)
                         doc.metadata["source"] = str(rel_path.as_posix().strip("/"))
                 except Exception as e:
-                    print(f"cannot convert absolute path ({source}) to relative path. error is : {e}")
+                    appLogger.info(f"cannot convert absolute path ({source}) to relative path. error is : {e}")
             self.delete_doc(kb_file)
-            print(f"add_doc filepath:{kb_file.filepath}，将要执行do_add_doc")
+            #appLogger.info(f"add_doc filepath:{kb_file.filepath}，将要执行do_add_doc")
             doc_infos = self.do_add_doc(docs, **kwargs)
-            print(f"add_doc filepath:{kb_file.filepath} 将要执行dd_file_to_db")
+            #appLogger.info(f"add_doc filepath:{kb_file.filepath} 将要执行dd_file_to_db")
             status = add_file_to_db(kb_file,
                                     custom_docs=custom_docs,
                                     docs_count=len(docs),
                                     doc_infos=doc_infos)
+            
+            end_time = time.time()  # 记录结束时间
+            execution_time = end_time - start_time  # 计算执行时间
+            appLogger.info(f"add_doc: 入库耗时：{execution_time}秒")
         else:
             status = False
         return status
@@ -214,7 +226,7 @@ class KBService(ABC):
     def del_doc_by_ids_from_db(self, knowledge_base_name: str , file_name:str, ids: List[str]) -> bool:
         delete_docs_from_db_by_ids(ids)
         update_file_to_db(knowledge_base_name = knowledge_base_name,file_name = file_name)
-        print(f"*******KBService del_doc_by_ids_from_db")
+        #print(f"*******KBService del_doc_by_ids_from_db")
         return True
         
 
@@ -239,7 +251,7 @@ class KBService(ABC):
         通过file_name或metadata检索Document
         '''
         doc_infos = list_docs_from_db(kb_name=self.kb_name, file_name=file_name, metadata=metadata)
-        print(f"kb_doc_api list_docs_from_db: {doc_infos}")
+        #appLogger.info(f"kb_doc_api list_docs_from_db: {doc_infos}")
         docs = []
         for x in doc_infos:
             doc_info = self.get_doc_by_ids([x["id"]])
@@ -257,7 +269,7 @@ class KBService(ABC):
             else:
                 # 处理 doc_info 是 NoneType 或者不是列表的情况
                 # 可以选择跳过当前循环迭代或执行其他操作
-                print("base.py list_docs 返回为空")
+                #print("base.py list_docs 返回为空")
                 pass
         return docs
 
