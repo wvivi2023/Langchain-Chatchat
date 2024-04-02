@@ -1,5 +1,5 @@
 from fastapi import Body
-from configs import logger, log_verbose
+from configs import logger, log_verbose, logger
 from server.utils import BaseResponse
 from server.db.repository import feedback_message_to_db
 

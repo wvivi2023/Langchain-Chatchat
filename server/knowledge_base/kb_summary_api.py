@@ -1,7 +1,7 @@
 from fastapi import Body
 from configs import (DEFAULT_VS_TYPE, EMBEDDING_MODEL,
                      OVERLAP_SIZE,
-                     logger, log_verbose, )
+                     logger, log_verbose )
 from server.knowledge_base.utils import (list_files_from_folder)
 from sse_starlette import EventSourceResponse
 import json
@@ -10,7 +10,7 @@ from typing import List, Optional
 from server.knowledge_base.kb_summary.base import KBSummaryService
 from server.knowledge_base.kb_summary.summary_chunk import SummaryAdapter
 from server.utils import wrap_done, get_ChatOpenAI, BaseResponse
-from configs import LLM_MODELS, TEMPERATURE
+from configs import LLM_MODELS, TEMPERATURE, logger
 from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 
 def recreate_summary_vector_store(

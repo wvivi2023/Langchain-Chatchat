@@ -1,5 +1,6 @@
 from langchain.docstore.document import Document
 import re
+from configs import logger
 
 def get_fist_level_title(
         text: str,
@@ -181,11 +182,11 @@ def zh_second_title_enhance(docs: Document) -> Document:
     title = None
     if len(docs) > 0:
         for doc in docs:
-            #print(f"zh_second_title_enhance: {doc}")
+            logger.debug(f"zh_second_title_enhance: {doc}")
             second_title = get_second_level_title(doc.page_content)
             if second_title:
                 title = second_title
-                #print(f"title: {title}")
+                logger.debug(f"title: {title}")
             elif title:
                 #print(f"title is not none")
                 temp_third_content = is_third_level_content(doc.page_content)
@@ -194,7 +195,7 @@ def zh_second_title_enhance(docs: Document) -> Document:
                     doc.page_content = f"{title} {doc.page_content}"
                 else:
                     title = None
-            print(f"final title: {title}")
+            logger.debug(f"final title: {title}")
         return docs
     else:
         print("zh_second_title_enhance 文件不存在")
@@ -204,19 +205,19 @@ def zh_first_title_enhance(docs: Document) -> Document:
     title = None
     if len(docs) > 0:
         for doc in docs:
-            #print(f"zh_first_title_enhance: {doc}")
+            logger.debug(f"zh_first_title_enhance: {doc}")
             first_title = get_fist_level_title(doc.page_content)
             if first_title:
                 title = first_title
-                #print(f"title: {title}")
+                logger.debug(f"title: {title}")
             elif title:
                 temp_second_content = is_second_level_content(doc.page_content)
                 if temp_second_content:
-                    #print(f"is_second_level_content : {temp_second_content}")
+                    logger.debug(f"is_second_level_content : {temp_second_content}")
                     doc.page_content = f"{title} {doc.page_content}"
                 else:
                     title = None
-        #print(f"final title: {title}")
+        logger.debug(f"final title: {title}")
         return docs
     else:
         print("zh_first_title_enhance 文件不存在")

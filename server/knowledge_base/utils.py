@@ -5,7 +5,6 @@ from configs import (
     OVERLAP_SIZE,
     ZH_TITLE_ENHANCE,
     logger,
-    appLogger,
     log_verbose,
     text_splitter_dict,
     LLM_MODELS,
@@ -95,7 +94,7 @@ def list_files_from_folder(kb_name: str):
                 process_entry(entry)
 
     except Exception as e:
-        appLogger.error(f"Error 发生 : {e}")
+        logger.error(f"Error 发生 : {e}")
     
     return result
 
@@ -176,7 +175,7 @@ def get_loader(loader_name: str, file_path: str, loader_kwargs: Dict = None):
         DocumentLoader = getattr(document_loaders_module, loader_name)
     except Exception as e:
         msg = f"为文件{file_path}查找加载器{loader_name}时出错：{e}"
-        appLogger.error(f'{e.__class__.__name__}: {msg}',
+        logger.error(f'{e.__class__.__name__}: {msg}',
                      exc_info=e if log_verbose else None)
         document_loaders_module = importlib.import_module('langchain.document_loaders')
         DocumentLoader = getattr(document_loaders_module, "UnstructuredFileLoader")
@@ -315,14 +314,15 @@ class KnowledgeFile:
 
     def file2docs(self, refresh: bool = False):
         if self.docs is None or refresh:
-            appLogger.info(f"{self.document_loader_name} used for {self.filepath}")
+            logger.info(f"{self.document_loader_name} used for {self.filepath}")
             loader = get_loader(loader_name=self.document_loader_name,
                                 file_path=self.filepath,
                                 loader_kwargs=self.loader_kwargs)
             self.docs = loader.load()
+            logger.info(f"{self.filepath}加载完成")
         return self.docs
         
-        print(f"KnowledgeFile: filepath:{self.filepath}, doc_title_name:{self.doc_title_name}, ext:{self.ext}")
+        #print(f"KnowledgeFile: filepath:{self.filepath}, doc_title_name:{self.doc_title_name}, ext:{self.ext}")
 
     def docs2texts(
             self,
@@ -347,7 +347,7 @@ class KnowledgeFile:
             if doc.page_content.strip()!="":
                 doc.page_content = re.sub(r"\n{2,}", "\n", doc.page_content.strip()) 
         file_name_without_extension, file_extension = os.path.splitext(self.filepath)
-        print(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
+        logger.info(f"filepath:{self.filepath},文件名拆分后：{file_name_without_extension},{file_extension}")
         if not docs:
             return []
         if self.ext not in [".csv"]:
@@ -437,10 +437,11 @@ def files2docs_in_thread(
 
     def file2docs(*, file: KnowledgeFile, **kwargs) -> Tuple[bool, Tuple[str, str, List[Document]]]:
         try:
+            logger.info(f"file2docs 从文件 {file.kb_name}/{file.filename}")
             return True, (file.kb_name, file.filename, file.file2text(**kwargs))
         except Exception as e:
-            msg = f"从文件 {file.kb_name}/{file.filename} 加载文档时出错：{e}"
-            appLogger.error(f'{e.__class__.__name__}: {msg}',
+            msg = f"file2docs 从文件 {file.kb_name}/{file.filename} 加载文档时出错：{e}"
+            logger.error(f'{e.__class__.__name__}: {msg}',
                          exc_info=e if log_verbose else None)
             return False, (file.kb_name, file.filename, msg)
 

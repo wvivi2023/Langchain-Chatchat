@@ -11,7 +11,8 @@ from configs import (LLM_MODELS,
                      RERANKER_MODEL,
                      RERANKER_MAX_LENGTH,
                      MODEL_PATH,
-                     DOWNLOAD_BASE_URL)
+                     DOWNLOAD_BASE_URL,
+                     logger)
 from server.utils import wrap_done, get_ChatOpenAI
 from server.utils import BaseResponse, get_prompt_template
 from langchain.chains import LLMChain
@@ -26,6 +27,8 @@ from urllib.parse import urlencode
 from server.knowledge_base.kb_doc_api import search_docs
 from server.reranker.reranker import LangchainReranker
 from server.utils import embedding_device
+import time
+
 async def knowledge_base_chat(query: str = Body(..., description="用户输入", examples=["你好"]),
                               knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
                               top_k: int = Body(VECTOR_SEARCH_TOP_K, description="匹配向量数"),
@@ -81,6 +84,7 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
             max_tokens=max_tokens,
             callbacks=[callback],
         )
+        start_time = time.time()  # 记录开始时间
         docs = search_docs(query, knowledge_base_name, top_k, score_threshold)
         # docs = await run_in_threadpool(search_docs,
         #                                query=query,
@@ -88,7 +92,14 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         #                                top_k=top_k,
         #                                score_threshold=score_threshold)
 
+        end_time = time.time()  # 记录结束时间
+        execution_time = end_time - start_time  # 计算执行时间
+        logger.info(f"search_docs 耗时{execution_time}秒")
+        
         # 加入reranker
+        logger.info(f"use_reranker:{USE_RERANKER}")
+
+        start_time = time.time()  # 记录开始时间
         if USE_RERANKER:
             reranker_model_path = MODEL_PATH["reranker"].get(RERANKER_MODEL,"BAAI/bge-reranker-large")
             print("-----------------model path------------------")
@@ -102,6 +113,9 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
                                                      query=query)
             print("---------after rerank------------------")
             print(docs)
+            end_time = time.time()  # 记录结束时间
+            execution_time = end_time - start_time  # 计算执行时间
+            logger.info(f"reranker 耗时{execution_time}秒")
 
         context = "\n".join([doc.page_content for doc in docs])
 

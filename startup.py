@@ -566,36 +566,36 @@ def dump_server_info(after_start=False, args=None):
     import fastchat
     from server.utils import api_address, webui_address
 
-    print("\n")
-    print("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
-    print(f"操作系统：{platform.platform()}.")
-    print(f"python版本：{sys.version}")
-    print(f"项目版本：{VERSION}")
-    print(f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}")
-    print("\n")
+    logger.info("\n")
+    logger.info("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
+    logger.info(f"操作系统：{platform.platform()}")
+    logger.info(f"python版本：{sys.version}")
+    logger.info(f"项目版本：{VERSION}")
+    logger.info(f"langchain版本：{langchain.__version__}. fastchat版本：{fastchat.__version__}")
+    logger.info("\n")
 
     models = LLM_MODELS
     if args and args.model_name:
         models = args.model_name
 
-    print(f"当前使用的分词器：{TEXT_SPLITTER_NAME}")
-    print(f"当前启动的LLM模型：{models} @ {llm_device()}")
+    logger.info(f"当前使用的分词器：{TEXT_SPLITTER_NAME}")
+    logger.info(f"当前启动的LLM模型：{models} @ {llm_device()}")
 
     for model in models:
         pprint(get_model_worker_config(model))
-    print(f"当前Embbedings模型： {EMBEDDING_MODEL} @ {embedding_device()}")
+    logger.info(f"当前Embbedings模型： {EMBEDDING_MODEL} @ {embedding_device()}")
 
     if after_start:
-        print("\n")
-        print(f"服务端运行信息：")
+        logger.info("\n")
+        logger.info(f"服务端运行信息：")
         if args.openai_api:
-            print(f"    OpenAI API Server: {fschat_openai_api_address()}")
+            logger.info(f"    OpenAI API Server: {fschat_openai_api_address()}")
         if args.api:
-            print(f"    Chatchat  API  Server: {api_address()}")
+            logger.info(f"    Chatchat  API  Server: {api_address()}")
         if args.webui:
-            print(f"    Chatchat WEBUI Server: {webui_address()}")
-    print("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
-    print("\n")
+            logger.info(f"    Chatchat WEBUI Server: {webui_address()}")
+    logger.info("=" * 30 + "Langchain-Chatchat Configuration" + "=" * 30)
+    logger.info("\n")
 
 
 async def start_main_server():

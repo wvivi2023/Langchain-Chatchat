@@ -1,6 +1,6 @@
 from typing import List
 from langchain.document_loaders.unstructured import UnstructuredFileLoader
-from configs import PDF_OCR_THRESHOLD
+from configs import PDF_OCR_THRESHOLD,logger
 from document_loaders.ocr import get_ocr
 #PDF_OCR_THRESHOLD= (0.6,0.6)
 #from ocr import get_ocr
@@ -23,7 +23,7 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
                 print(f"****page:{i+1}****")
                 text = page.get_text("")
                 text_lines = text.strip().split("\n")
-                #print(f"文字内容：{text_lines}")
+                logger.debug(f"文字内容：{text_lines}")
 
                 img_list = page.get_image_info(xrefs=True)
                 ocr_result = []
@@ -39,7 +39,7 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
                         result, _ = ocr(img_array)
                         if result:
                             ocr_result = [line[1] for line in result]
-                            #print(f"图片内容：{ocr_result}")
+                            logger.debug(f"图片内容：{ocr_result}")
                             #resp += "\n".join(ocr_result)
 
                 if (len(ocr_result)>0):
@@ -49,7 +49,7 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
                         # 假设页码在最后一行
                         if text_lines[-1].isdigit():
                             text = "\n".join(text_lines[:-1])
-                            print(f"******去除了页码")
+                            logger.debug(f"******去除了页码")
                     resp += text + "\n"
 
                 # 更新进度

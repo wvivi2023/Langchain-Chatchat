@@ -19,7 +19,7 @@ from server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from typing import List, Dict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from configs import USE_RANKING, appLogger
+from configs import USE_RANKING, logger
 import jieba
 from typing import List, Dict,Tuple
 
@@ -39,7 +39,7 @@ def search_docs(
     data = []
     if kb is not None:
         if query:
-            print(f"search_docs, query:{query}")  
+            logger.info(f"search_docs, query:{query},top_k:{top_k},score_threshold:{score_threshold}, use_ranking:{USE_RANKING}")  
             docs = kb.search_docs(query, FIRST_VECTOR_SEARCH_TOP_K, score_threshold)
             #print(f"search_docs,len of docs {len(docs)}, docs:{docs}")
             
@@ -355,7 +355,7 @@ def update_docs(
     failed_files = {}
     kb_files = []
 
-    appLogger.info(f"111111 kb_doc_api update_docs file_names:{file_names},更新的doc 长度：{len(docs)}")
+    logger.info(f"111111 kb_doc_api update_docs file_names:{file_names},更新的doc 长度：{len(docs)}")
     # 生成需要加载docs的文件列表
     for file_name in file_names:
         file_detail = get_file_detail(kb_name=knowledge_base_name, filename=file_name)
@@ -364,7 +364,7 @@ def update_docs(
             continue
         if file_name not in docs:
             try:
-                appLogger.info(f"****kb_doc_api update_docs file_name not in docs,filename:{file_name}")
+                logger.info(f"****kb_doc_api update_docs file_name not in docs,filename:{file_name}")
                 kb_files.append(KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name))
             except Exception as e:
                 msg = f"加载文档 {file_name} 时出错：{e}"
@@ -391,7 +391,7 @@ def update_docs(
     # 将自定义的docs进行向量化
     for file_name, v in docs.items():
         try:
-            appLogger.info(f"222222 kb_doc_api update_docs file_name:{file_name},更新的doc 长度：{len(docs)}")
+            logger.info(f"222222 kb_doc_api update_docs file_name:{file_name},更新的doc 长度：{len(docs)}")
             v = [x if isinstance(x, Document) else Document(**x) for x in v]
             kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb.update_doc(kb_file, docs=v, not_refresh_vs_cache=True)

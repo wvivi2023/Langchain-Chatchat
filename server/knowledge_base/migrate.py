@@ -65,7 +65,7 @@ def import_from_db(
         con.close()
         return True
     except Exception as e:
-        print(f"无法读取备份数据库：{sqlite_path}。错误信息：{e}")
+        logger.error(f"无法读取备份数据库：{sqlite_path}。错误信息：{e}")
         return False
 
 

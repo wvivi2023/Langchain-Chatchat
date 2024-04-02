@@ -3,7 +3,7 @@ import os
 import langchain
 import tempfile
 import shutil
-
+from logging.handlers import RotatingFileHandler
 
 # 是否显示详细日志
 log_verbose = False
@@ -14,9 +14,12 @@ langchain.verbose = False
 # 日志格式
 LOG_FORMAT = "%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logging.basicConfig(format=LOG_FORMAT)
 
+LOG_BACKUP_COUNT = 10  # 保留的归档文件数量
+LOG_MAX_FILE_SIZE = 1024 * 1024  # 每个日志文件的最大大小（以字节为单位）
+
+# 创建日志记录器并设置日志级别
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 # 日志存储路径
 LOG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
@@ -32,20 +35,14 @@ except Exception:
 os.makedirs(BASE_TEMP_DIR, exist_ok=True)
 
 
-#added by weiweiwang for log
-
-# 创建日志记录器并设置日志级别
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-
 # 创建文件处理程序，并设置日志级别和文件名
-#appLogPath =  os.path.join(LOG_PATH, "app.log")
-file_handler = logging.FileHandler(LOG_PATH +'/app.log')
+file_handler = RotatingFileHandler(LOG_PATH +'/app.log', maxBytes=LOG_MAX_FILE_SIZE, backupCount=LOG_BACKUP_COUNT)
 file_handler.setLevel(logging.INFO)
 
-# 设置日志记录格式
+# # 设置日志记录格式
 formatter = logging.Formatter(LOG_FORMAT)
 file_handler.setFormatter(formatter)
 
 # 获取日志记录器并添加文件处理程序
-appLogger = logging.getLogger(__name__)
-appLogger.addHandler(file_handler)
+logger.addHandler(file_handler)
+
