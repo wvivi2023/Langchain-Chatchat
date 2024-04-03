@@ -249,7 +249,7 @@ def upload_docs(
     failed_files = {}
     file_names = list(docs.keys())
 
-    print(f"upload_docs, file_names:{file_names}")
+    logger.info(f"upload_docs, file_names:{file_names}")
 
     # 先将上传的文件保存到磁盘
     for result in _save_files_in_thread(files, knowledge_base_name=knowledge_base_name, override=override):
@@ -262,7 +262,7 @@ def upload_docs(
 
    
     # 对保存的文件进行向量化
-    print(f"upload_docs, to_vector_store:{to_vector_store}")
+    #print(f"upload_docs, to_vector_store:{to_vector_store}")
     if to_vector_store:
         result = update_docs(
             knowledge_base_name=knowledge_base_name,
