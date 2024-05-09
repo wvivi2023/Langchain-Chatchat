@@ -65,6 +65,7 @@ class CustomizedPDFLoader(UnstructuredFileLoader):
 
 
 if __name__ == "__main__":
-    loader = CustomizedPDFLoader(file_path="变电站设备验收规范第28 部分避雷针.pdf")
+    loader = CustomizedPDFLoader(file_path="/Users/wangvivi/Downloads/6.国网信通部关于开展移动应用安全备案梳理工作的通知.pdf")
     docs = loader.load()
+    print("pdf 内容为：")
     print(docs)

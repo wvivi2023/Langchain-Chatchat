@@ -16,7 +16,7 @@ from server.knowledge_base.utils import KnowledgeFile
 import json
 import os
 from pathlib import Path
-
+from fastapi.responses import StreamingResponse
 
 def _parse_files_in_thread(
     files: List[UploadFile],
@@ -170,4 +170,5 @@ async def file_chat(query: str = Body(..., description="用户输入", examples=
                              ensure_ascii=False)
         await task
 
-    return EventSourceResponse(knowledge_base_chat_iterator())
+    return StreamingResponse(knowledge_base_chat_iterator(),
+                              media_type="text/event-stream")

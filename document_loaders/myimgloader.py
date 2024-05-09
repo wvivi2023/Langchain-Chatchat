@@ -1,6 +1,7 @@
 from typing import List
 from langchain.document_loaders.unstructured import UnstructuredFileLoader
-from document_loaders.ocr import get_ocr
+#from document_loaders.ocr import get_ocr
+from ocr import get_ocr
 
 
 class RapidOCRLoader(UnstructuredFileLoader):
@@ -20,6 +21,10 @@ class RapidOCRLoader(UnstructuredFileLoader):
 
 
 if __name__ == "__main__":
-    loader = RapidOCRLoader(file_path="../tests/samples/ocr_test.jpg")
+    #loader = RapidOCRLoader(file_path="/Users/wangvivi/Desktop/Code/ocrtest/images/id_card.JPG")
+    #loader = RapidOCRLoader(file_path="/Users/wangvivi/Desktop/Code/ocrtest/images/id_card.JPG")
+    #loader = RapidOCRLoader(file_path="/Users/wangvivi/Desktop/Code/ocrtest/images/20230726163834.png")
+    loader = RapidOCRLoader(file_path="/Users/wangvivi/Desktop/Code/ocrtest/images/QQ截图20230726163813.png")
+    #loader = RapidOCRLoader(file_path="/Users/wangvivi/Desktop/Code/ocrtest/images/fapiao.jpg")
     docs = loader.load()
     print(docs)

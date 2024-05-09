@@ -20,7 +20,7 @@ import json
 from typing import List, Optional, Dict
 from strsimpy.normalized_levenshtein import NormalizedLevenshtein
 from markdownify import markdownify
-
+from fastapi.responses import StreamingResponse
 
 def bing_search(text, result_len=SEARCH_ENGINE_TOP_K, **kwargs):
     if not (BING_SEARCH_URL and BING_SUBSCRIPTION_KEY):
@@ -199,10 +199,18 @@ async def search_engine_chat(query: str = Body(..., description="用户输入", 
                              ensure_ascii=False)
         await task
 
-    return EventSourceResponse(search_engine_chat_iterator(query=query,
-                                                           search_engine_name=search_engine_name,
+    return StreamingResponse(search_engine_chat_iterator(query=query,
+                                                          search_engine_name=search_engine_name,
                                                            top_k=top_k,
                                                            history=history,
                                                            model_name=model_name,
                                                            prompt_name=prompt_name),
-                               )
+                                                        media_type="text/event-stream")
+
+# EventSourceResponse(search_engine_chat_iterator(query=query,
+#                                                            search_engine_name=search_engine_name,
+#                                                            top_k=top_k,
+#                                                            history=history,
+#                                                            model_name=model_name,
+#                                                            prompt_name=prompt_name),
+                            #    )

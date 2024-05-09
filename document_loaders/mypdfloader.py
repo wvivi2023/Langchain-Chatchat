@@ -1,9 +1,9 @@
 from typing import List
 from langchain.document_loaders.unstructured import UnstructuredFileLoader
-from configs import PDF_OCR_THRESHOLD,logger
-from document_loaders.ocr import get_ocr
-#PDF_OCR_THRESHOLD= (0.6,0.6)
-#from ocr import get_ocr
+#from configs import PDF_OCR_THRESHOLD,logger
+#from document_loaders.ocr import get_ocr
+PDF_OCR_THRESHOLD= (0.6,0.6)
+from ocr import get_ocr
 import tqdm
 import re
 
@@ -23,7 +23,8 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
                 print(f"****page:{i+1}****")
                 text = page.get_text("")
                 text_lines = text.strip().split("\n")
-                logger.debug(f"文字内容：{text_lines}")
+                print(f"文字内容：{text_lines}")
+                #logger.debug(f"文字内容：{text_lines}")
 
                 img_list = page.get_image_info(xrefs=True)
                 ocr_result = []
@@ -39,7 +40,8 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
                         result, _ = ocr(img_array)
                         if result:
                             ocr_result = [line[1] for line in result]
-                            logger.debug(f"图片内容：{ocr_result}")
+                            print(f"图片内容：{ocr_result}")
+                            #logger.debug(f"图片内容：{ocr_result}")
                             #resp += "\n".join(ocr_result)
 
                 if (len(ocr_result)>0):
@@ -49,7 +51,7 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
                         # 假设页码在最后一行
                         if text_lines[-1].isdigit():
                             text = "\n".join(text_lines[:-1])
-                            logger.debug(f"******去除了页码")
+                            #logger.debug(f"******去除了页码")
                     resp += text + "\n"
 
                 # 更新进度
@@ -66,7 +68,8 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
 
 
 if __name__ == "__main__":
-    loader = RapidOCRPDFLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/图片版pdf数据/变电站集中监控验收技术导则.pdf")
+    #loader = RapidOCRPDFLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/图片版pdf数据/变电站集中监控验收技术导则.pdf")
+    loader = RapidOCRPDFLoader(file_path="/Users/wangvivi/Desktop/Code/ocrtest/images/id_card.JPG")
     #loader = RapidOCRPDFLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/原PDF文档/设备/AQ80012007.pdf")
     #loader = RapidOCRPDFLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/原PDF文档/设备/DL4081991.pdf")
     #loader = RapidOCRPDFLoader(file_path="/Users/wangvivi/Desktop/Work/思极GPT/数字化部/原PDF文档/设备/AQ80032007.pdf")

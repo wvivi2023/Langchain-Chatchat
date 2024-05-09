@@ -21,7 +21,7 @@ from server.agent.callbacks import CustomAsyncIteratorCallbackHandler, Status
 from server.chat.utils import History
 from server.agent import model_container
 from server.agent.custom_template import CustomOutputParser, CustomPromptTemplate
-
+from configs import logger
 
 async def agent_chat(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),
                      history: List[History] = Body([],
@@ -61,8 +61,10 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
         kb_list = {x["kb_name"]: x for x in get_kb_details()}
         model_container.DATABASE = {name: details['kb_info'] for name, details in kb_list.items()}
 
-        print(f"agent_chat_iterator model_container.DATABASE:{model_container.DATABASE}")
-        print(f"agent_chat_iterator temperature:{temperature}")
+        logger.info(f"agent_chat_iterator model_container.DATABASE:{model_container.DATABASE}")
+        logger.info(f"agent_chat_iterator temperature:{temperature}")
+        logger.info(f"query:{query}")
+        logger.info(f"history:{history}")
         if Agent_MODEL:
             model_agent = get_ChatOpenAI(
                 model_name=Agent_MODEL,
@@ -71,10 +73,10 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                 callbacks=[callback],
             )
             model_container.MODEL = model_agent
-            print(f"111 agent_chat_iterator :model_container.MODEL:{ model_container.MODEL}")
+            logger.info(f"111 agent_chat_iterator :model_container.MODEL:{ model_container.MODEL}")
         else:
             model_container.MODEL = model
-            print(f"222 agent_chat_iterator :model_container.MODEL:{model_container.MODEL}")
+            logger.info(f"222 agent_chat_iterator :model_container.MODEL:{model_container.MODEL}")
 
         prompt_template = get_prompt_template("agent_chat", prompt_name)
         prompt_template_agent = CustomPromptTemplate(
@@ -82,8 +84,14 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
             tools=tools,
             input_variables=["input", "intermediate_steps", "history"]
         )
+
+        #str_prompt = prompt_template_agent.format()
+        logger.info("agent_chat prompt:")
+        logger.info(prompt_template)
+
         output_parser = CustomOutputParser()
         llm_chain = LLMChain(llm=model, prompt=prompt_template_agent)
+        
         memory = ConversationBufferWindowMemory(k=HISTORY_LEN * 2)
         for message in history:
             if message.role == 'user':
@@ -97,7 +105,7 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                 tools=tools,
                 callback_manager=None,
                 prompt=prompt_template,
-                input_variables=["input", "intermediate_steps", "history"],
+                input_variables=["input", "history"],#["input", "intermediate_steps", "history"],
                 memory=memory,
                 verbose=True,
             )

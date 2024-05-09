@@ -92,6 +92,24 @@ PROMPT_TEMPLATES = {
             'Question: {input}\n\n'
             'Thought: {agent_scratchpad}\n',
 
+        "agent_chinese":
+            '尽量回答以下问题。如果需要，你可以适当使用一些工具。'
+            '你可以使用以下工具：\n\n'
+            '{tools}\n\n'
+            '请按照以下格式进行操作：\n'
+            'Question：你必须回答的输入问题1\n'
+            'Action：根据用户的问题，选择使用哪个tool,应该采取的行动之一为 [{tool_names}]\n'
+            'Action Input: 根据需要使用的tool，从用户的问题里提取相关的内容，可以输入到tool里面\n'
+            'Observation: 通过使用tool得到一个输出结果\n'
+            'Thought:再看一眼用户输入的问题，判断下一步该怎么做。\n'
+            '... (这些 Thought/Action/Action Input/Observation 可以重复多次执行)\n'
+            'Thought:我现在知道最终的答案\n'
+            'Final Answer: 原始输入问题的最终答案\n'
+            '开始!\n\n'
+            'History: {history}\n\n'
+            'Question: {input}\n\n'
+            'Thought: {agent_scratchpad}\n',
+
         "ChatGLM3":
             'You can answer using the tools, or answer directly using your knowledge without using the tools. '
             'Respond to the human as helpfully and accurately as possible.\n'

@@ -17,11 +17,13 @@ async def search_engine_iter(query: str):
                                          stream=False)
 
     contents = ""
-
-    async for data in response.body_iterator: # 这里的data是一个json字符串
-        data = json.loads(data)
-        contents = data["answer"]
-        docs = data["docs"]
+    print(response)
+    # async for data in response.get("answer"): # 这里的data是一个json字符串
+    #     print(data)
+    #     contents += data
+        # data = json.loads(data)
+        # contents = data["answer"]
+        # docs = data["docs"]
 
     return contents
 
