@@ -34,7 +34,8 @@ async def document():
 def create_app(run_mode: str = None):
     app = FastAPI(
         title="思极大模型 API Server",
-        version=VERSION
+        version=VERSION,
+        docs_url=None
     )
     MakeFastAPIOffline(app)
     # Add CORS middleware to allow all origins
